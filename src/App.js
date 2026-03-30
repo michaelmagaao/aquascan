@@ -1,0 +1,382 @@
+import { useState, useRef, useEffect, useCallback } from "react";
+
+/* ── Helpers ── */
+const toBase64 = (file) =>
+  new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result.split(",")[1]);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+
+const dataUrlToBase64 = (dataUrl) => dataUrl.split(",")[1];
+
+/* ── API call — hits YOUR proxy, not Anthropic directly ── */
+async function identifyFish(base64Image) {
+  const response = await fetch("/api/identify", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ imageBase64: base64Image }),
+  });
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(err.error || `Server error ${response.status}`);
+  }
+
+  const data = await response.json();
+
+  if (data.error === "no_fish")
+    throw new Error("No fish detected. Please point the camera at a fish or upload a fish photo.");
+
+  return data;
+}
+
+/* ── Styles ── */
+const CSS = `
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--deep:#020d1a;--abyss:#040e1c;--ocean:#062642;--mid:#0a3a60;--teal:#0d9488;--cyan:#22d3ee;--aqua:#06b6d4;--foam:#e0f7ff;--biolum:#7fffd4;--amber:#f59e0b;--coral:#f97316;--text:#cce9f5;--muted:#5a8ba8;--card:rgba(6,38,66,0.7)}
+.aq-root{font-family:'Space Mono',monospace;background:var(--deep);color:var(--text);min-height:100vh;position:relative;overflow-x:hidden}
+.aq-ocean{position:fixed;inset:0;z-index:0;overflow:hidden;background:radial-gradient(ellipse at 20% 80%,#062642 0%,#020d1a 60%),radial-gradient(ellipse at 80% 20%,#041a2e 0%,transparent 50%)}
+.aq-scanlines{position:fixed;inset:0;z-index:1;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.04) 2px,rgba(0,0,0,0.04) 4px)}
+@keyframes rise{0%{transform:translateY(110vh) scale(1);opacity:0}10%{opacity:.9}90%{opacity:.5}100%{transform:translateY(-10vh) scale(1.3);opacity:0}}
+.aq-bubble{position:absolute;border-radius:50%;background:radial-gradient(circle at 30% 30%,rgba(34,211,238,.3),rgba(6,182,212,.06));border:1px solid rgba(34,211,238,.15);animation:rise linear infinite}
+.aq-app{position:relative;z-index:2;max-width:860px;margin:0 auto;padding:0 18px 60px}
+.aq-header{display:flex;align-items:center;gap:14px;padding:28px 0 24px;border-bottom:1px solid rgba(34,211,238,.12)}
+.aq-logo-h1{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(22px,5vw,30px);letter-spacing:-1px;background:linear-gradient(135deg,var(--cyan),var(--biolum));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.aq-logo-sub{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-top:2px}
+.aq-pill{margin-left:auto;display:flex;align-items:center;gap:8px;background:rgba(13,148,136,.12);border:1px solid rgba(13,148,136,.3);border-radius:100px;padding:6px 14px;font-size:11px;letter-spacing:1px;color:var(--teal)}
+@keyframes pulse2{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.75)}}
+.aq-dot{width:7px;height:7px;border-radius:50%;background:var(--teal);animation:pulse2 2s ease-in-out infinite}
+.aq-label{font-size:10px;letter-spacing:4px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;display:flex;align-items:center;gap:10px}
+.aq-label::after{content:'';flex:1;height:1px;background:linear-gradient(to right,rgba(34,211,238,.2),transparent)}
+.aq-modes{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.aq-mode{flex:1;min-width:130px;padding:11px 16px;background:var(--card);border:1px solid rgba(34,211,238,.12);border-radius:10px;color:var(--muted);font-family:'Space Mono',monospace;font-size:12px;letter-spacing:1px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:9px}
+.aq-mode:hover{border-color:rgba(34,211,238,.3);color:var(--text)}
+.aq-mode.on{background:rgba(13,148,136,.18);border-color:var(--teal);color:var(--cyan);box-shadow:0 0 18px rgba(13,148,136,.15)}
+.aq-zone{position:relative;border-radius:16px;overflow:hidden;border:1px solid rgba(34,211,238,.18);background:var(--abyss);min-height:300px;display:flex;align-items:center;justify-content:center}
+.aq-zone video,.aq-zone img.aq-preview{width:100%;max-height:440px;object-fit:cover;display:block;border-radius:16px}
+.aq-corner{position:absolute;width:20px;height:20px;border-color:var(--cyan);border-style:solid;opacity:0;transition:opacity .5s}
+.aq-corner.tl{top:12px;left:12px;border-width:2px 0 0 2px}
+.aq-corner.tr{top:12px;right:12px;border-width:2px 2px 0 0}
+.aq-corner.bl{bottom:12px;left:12px;border-width:0 0 2px 2px}
+.aq-corner.br{bottom:12px;right:12px;border-width:0 2px 2px 0}
+.aq-zone.live .aq-corner{opacity:1}
+@keyframes beam{0%,100%{top:12%}50%{top:82%}}
+.aq-beam{position:absolute;left:0;right:0;height:2px;background:linear-gradient(to right,transparent,var(--cyan),transparent);box-shadow:0 0 12px var(--cyan),0 0 30px rgba(34,211,238,.4);animation:beam 2.4s ease-in-out infinite}
+.aq-idle{display:flex;flex-direction:column;align-items:center;gap:12px;color:var(--muted);text-align:center;padding:40px 20px}
+.aq-idle p{font-size:13px;line-height:1.7}
+.aq-overlay{position:absolute;inset:0;background:rgba(2,13,26,.78);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;border-radius:16px;z-index:10}
+@keyframes sonar{0%{transform:scale(.3);opacity:.8}100%{transform:scale(2.2);opacity:0}}
+.aq-sonar{width:70px;height:70px;position:relative}
+.aq-ring{position:absolute;border-radius:50%;border:2px solid var(--cyan);inset:0;animation:sonar 2s ease-out infinite;opacity:0}
+.aq-ring:nth-child(2){animation-delay:.6s}
+.aq-ring:nth-child(3){animation-delay:1.2s}
+.aq-sdot{position:absolute;inset:50%;transform:translate(-50%,-50%);width:12px;height:12px;border-radius:50%;background:var(--cyan);box-shadow:0 0 18px var(--cyan)}
+.aq-atxt{font-size:11px;letter-spacing:3px;color:var(--cyan);text-transform:uppercase}
+.aq-controls{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+.aq-btn-primary{flex:1;min-width:150px;padding:14px 22px;background:linear-gradient(135deg,var(--teal),var(--aqua));border:none;border-radius:12px;color:#fff;font-family:'Syne',sans-serif;font-weight:700;font-size:13px;letter-spacing:1px;cursor:pointer;transition:all .25s;display:flex;align-items:center;justify-content:center;gap:9px;box-shadow:0 4px 22px rgba(13,148,136,.35)}
+.aq-btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(13,148,136,.5)}
+.aq-btn-primary:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
+.aq-btn-sec{padding:14px 18px;background:var(--card);border:1px solid rgba(34,211,238,.18);border-radius:12px;color:var(--text);font-family:'Space Mono',monospace;font-size:12px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:8px}
+.aq-btn-sec:hover{border-color:var(--cyan);color:var(--cyan)}
+.aq-err{margin-top:14px;padding:14px 18px;background:rgba(249,115,22,.08);border:1px solid rgba(249,115,22,.3);border-radius:12px;color:var(--coral);font-size:13px;line-height:1.6}
+@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+.aq-card{background:var(--card);border:1px solid rgba(34,211,238,.18);border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.4);animation:slideUp .45s cubic-bezier(.22,1,.36,1) both;margin-top:28px}
+.aq-hero{display:grid;grid-template-columns:1fr 1fr}
+@media(max-width:580px){.aq-hero{grid-template-columns:1fr}}
+.aq-img-panel{position:relative;min-height:220px;overflow:hidden;background:var(--abyss)}
+.aq-img-panel img{width:100%;height:100%;object-fit:cover;display:block;filter:saturate(1.15) contrast(1.05)}
+.aq-badge{position:absolute;top:12px;left:12px;background:rgba(2,13,26,.85);border:1px solid var(--biolum);border-radius:8px;padding:5px 11px;font-size:11px;color:var(--biolum);letter-spacing:1px}
+.aq-summary{padding:24px 24px 20px;display:flex;flex-direction:column;gap:10px}
+.aq-family{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--teal)}
+.aq-name{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(20px,3.5vw,26px);color:var(--foam);line-height:1.1}
+.aq-sci{font-size:12px;font-style:italic;color:var(--muted)}
+.aq-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.aq-tag{padding:4px 10px;border-radius:6px;font-size:10px;letter-spacing:1px;text-transform:uppercase;border:1px solid}
+.aq-tag.h{color:var(--cyan);border-color:rgba(34,211,238,.3);background:rgba(34,211,238,.07)}
+.aq-tag.s{color:var(--amber);border-color:rgba(245,158,11,.3);background:rgba(245,158,11,.07)}
+.aq-tag.e{color:var(--biolum);border-color:rgba(127,255,212,.3);background:rgba(127,255,212,.07)}
+.aq-desc{margin:0 24px 24px;padding:18px;background:rgba(34,211,238,.04);border:1px solid rgba(34,211,238,.1);border-left:3px solid var(--teal);border-radius:0 12px 12px 0;font-size:13px;line-height:1.85;color:var(--text)}
+.aq-grid{padding:0 24px 24px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:460px){.aq-grid{grid-template-columns:1fr}}
+.aq-ditem{background:rgba(4,14,28,.5);border:1px solid rgba(34,211,238,.08);border-radius:12px;padding:14px}
+.aq-dlabel{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.aq-dval{font-size:13px;color:var(--text);line-height:1.5}
+.aq-fact{margin:0 24px 24px;display:flex;gap:12px;align-items:flex-start;padding:14px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.18);border-radius:12px}
+.aq-fact-icon{font-size:20px;flex-shrink:0}
+.aq-fact-lbl{font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--amber);margin-bottom:4px}
+.aq-fact-txt{font-size:13px;line-height:1.7;color:var(--text)}
+.aq-share{padding:18px 24px;border-top:1px solid rgba(34,211,238,.1);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.aq-share-lbl{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-right:auto}
+.aq-sbtn{display:flex;align-items:center;gap:7px;padding:9px 15px;border-radius:10px;font-family:'Space Mono',monospace;font-size:11px;cursor:pointer;border:1px solid;transition:all .2s;background:transparent}
+.aq-sbtn.tw{color:#1da1f2;border-color:rgba(29,161,242,.3)}.aq-sbtn.tw:hover{background:rgba(29,161,242,.12)}
+.aq-sbtn.fb{color:#4267b2;border-color:rgba(66,103,178,.3)}.aq-sbtn.fb:hover{background:rgba(66,103,178,.12)}
+.aq-sbtn.wa{color:#25d366;border-color:rgba(37,211,102,.3)}.aq-sbtn.wa:hover{background:rgba(37,211,102,.12)}
+.aq-sbtn.cp{color:var(--muted);border-color:rgba(90,139,168,.3)}.aq-sbtn.cp:hover{color:var(--cyan);border-color:rgba(34,211,238,.3)}
+@keyframes toastIn{from{opacity:0;transform:translate(-50%,20px)}to{opacity:1;transform:translate(-50%,0)}}
+.aq-toast{position:fixed;bottom:28px;left:50%;transform:translate(-50%,0);background:var(--ocean);border:1px solid var(--teal);border-radius:12px;padding:11px 22px;font-size:13px;color:var(--cyan);box-shadow:0 8px 28px rgba(0,0,0,.5);z-index:999;animation:toastIn .35s ease both}
+`;
+
+export default function AquaScan() {
+  const [mode, setMode] = useState("camera");
+  const [hasImage, setHasImage] = useState(false);
+  const [scanning, setScanning] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [fish, setFish] = useState(null);
+  const [error, setError] = useState("");
+  const [toast, setToast] = useState("");
+  const [previewSrc, setPreviewSrc] = useState("");
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const streamRef = useRef(null);
+  const base64Ref = useRef(null);
+  const bubblesRef = useRef([]);
+
+  useEffect(() => {
+    bubblesRef.current = Array.from({ length: 16 }, (_, i) => ({
+      id: i, size: 6 + Math.random() * 26,
+      left: Math.random() * 100,
+      dur: 8 + Math.random() * 14,
+      delay: Math.random() * 10,
+    }));
+  }, []);
+
+  useEffect(() => {
+    const el = document.createElement("style");
+    el.textContent = CSS;
+    document.head.appendChild(el);
+    return () => el.remove();
+  }, []);
+
+  const startCamera = useCallback(async () => {
+    try {
+      const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+      streamRef.current = s;
+      if (videoRef.current) { videoRef.current.srcObject = s; videoRef.current.style.display = "block"; }
+      setHasImage(true); setError("");
+    } catch {
+      setError("Camera access denied. Switch to Upload mode to scan a stored image.");
+    }
+  }, []);
+
+  const stopCamera = useCallback(() => {
+    if (streamRef.current) { streamRef.current.getTracks().forEach(t => t.stop()); streamRef.current = null; }
+    if (videoRef.current) videoRef.current.style.display = "none";
+  }, []);
+
+  useEffect(() => {
+    if (mode === "camera") startCamera();
+    return () => stopCamera();
+  }, [mode, startCamera, stopCamera]);
+
+  const reset = () => {
+    setHasImage(false); setFish(null); setError(""); setPreviewSrc("");
+    base64Ref.current = null;
+    if (mode === "camera") startCamera();
+  };
+
+  const handleFile = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const b64 = await toBase64(file);
+    base64Ref.current = b64;
+    setPreviewSrc(URL.createObjectURL(file));
+    setHasImage(true); setError(""); setFish(null);
+  };
+
+  const captureAndAnalyze = async () => {
+    setError(""); setFish(null);
+    let b64 = base64Ref.current;
+    if (mode === "camera") {
+      const video = videoRef.current; const canvas = canvasRef.current;
+      canvas.width = video.videoWidth || 640; canvas.height = video.videoHeight || 480;
+      canvas.getContext("2d").drawImage(video, 0, 0);
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.88);
+      b64 = dataUrlToBase64(dataUrl); base64Ref.current = b64; setPreviewSrc(dataUrl);
+    }
+    if (!b64) { setError("No image available. Please allow camera access or upload a photo."); return; }
+    setScanning(true); setAnalyzing(true);
+    try { const result = await identifyFish(b64); setFish(result); }
+    catch (err) { setError("Analysis failed: " + err.message); }
+    finally { setScanning(false); setAnalyzing(false); }
+  };
+
+  const shareOn = (platform) => {
+    if (!fish) return;
+    const text = `🐟 I identified a ${fish.commonName} (${fish.scientificName}) using AquaScan! #AquaScan #FishID #MarineLife`;
+    const url = encodeURIComponent(window.location.href);
+    const t = encodeURIComponent(text);
+    const map = {
+      twitter: `https://twitter.com/intent/tweet?text=${t}&url=${url}`,
+      facebook: `https://www.facebook.com/sharer/sharer.php?u=${url}&quote=${t}`,
+      whatsapp: `https://wa.me/?text=${t}%20${url}`,
+    };
+    window.open(map[platform], "_blank", "width=620,height=500");
+  };
+
+  const copyInfo = () => {
+    if (!fish) return;
+    const text = `🐟 AquaScan Fish ID\n\nSpecies: ${fish.commonName} (${fish.scientificName})\nFamily: ${fish.family}\nHabitat: ${fish.habitat}\nConservation: ${fish.conservationStatus}\n\n${fish.description}\n\n💡 ${fish.funFact}\n\n#AquaScan #FishID`;
+    navigator.clipboard.writeText(text).then(() => showToast("Copied!")).catch(() => showToast("Copy failed."));
+  };
+
+  const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(""), 2800); };
+
+  const switchMode = (m) => {
+    stopCamera(); setMode(m); setFish(null); setError("");
+    setPreviewSrc(""); base64Ref.current = null; setHasImage(false);
+  };
+
+  return (
+    <div className="aq-root">
+      <div className="aq-ocean">
+        {bubblesRef.current.map(b => (
+          <div key={b.id} className="aq-bubble" style={{ width: b.size, height: b.size, left: `${b.left}%`, animationDuration: `${b.dur}s`, animationDelay: `${b.delay}s` }} />
+        ))}
+      </div>
+      <div className="aq-scanlines" />
+      <div className="aq-app">
+
+        {/* Header */}
+        <header className="aq-header">
+          <svg width="46" height="46" viewBox="0 0 48 48" fill="none">
+            <circle cx="24" cy="24" r="22" stroke="#0d9488" strokeWidth="1.5" strokeDasharray="4 3"/>
+            <path d="M10 24 C14 18 20 14 28 15 C34 16 38 20 40 24 C38 28 34 32 28 33 C20 34 14 30 10 24Z" stroke="#22d3ee" strokeWidth="1.8" fill="none"/>
+            <path d="M28 15 L35 10 L32 18Z" fill="#0d9488"/>
+            <circle cx="31" cy="21" r="2" fill="#22d3ee"/>
+            <circle cx="24" cy="24" r="2" fill="none" stroke="#7fffd4" strokeWidth="1.2"/>
+            <line x1="24" y1="4" x2="24" y2="9" stroke="#0d9488" strokeWidth="1.5"/>
+            <line x1="24" y1="39" x2="24" y2="44" stroke="#0d9488" strokeWidth="1.5"/>
+            <line x1="4" y1="24" x2="9" y2="24" stroke="#0d9488" strokeWidth="1.5"/>
+            <line x1="39" y1="24" x2="44" y2="24" stroke="#0d9488" strokeWidth="1.5"/>
+          </svg>
+          <div>
+            <div className="aq-logo-h1">AquaScan</div>
+            <div className="aq-logo-sub">Fish Identification System</div>
+          </div>
+          <div className="aq-pill"><div className="aq-dot" />AI ONLINE</div>
+        </header>
+
+        {/* Scan section */}
+        <div style={{ marginTop: 28 }}>
+          <div className="aq-label">Input Source</div>
+          <div className="aq-modes">
+            <button className={`aq-mode${mode === "camera" ? " on" : ""}`} onClick={() => switchMode("camera")}>
+              <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              Live Camera
+            </button>
+            <button className={`aq-mode${mode === "upload" ? " on" : ""}`} onClick={() => switchMode("upload")}>
+              <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4M9 10l3-3 3 3M12 7v6"/></svg>
+              Upload Image
+            </button>
+          </div>
+
+          <div className={`aq-zone${hasImage ? " live" : ""}`}>
+            {["tl","tr","bl","br"].map(c => <div key={c} className={`aq-corner ${c}`}/>)}
+            {scanning && <div className="aq-beam"/>}
+            <video ref={videoRef} autoPlay playsInline style={{ display: "none" }}/>
+            {previewSrc && !analyzing && <img className="aq-preview" src={previewSrc} alt="Fish preview"/>}
+            <canvas ref={canvasRef} style={{ display: "none" }}/>
+            {!hasImage && !analyzing && (
+              <div className="aq-idle">
+                <svg width="54" height="54" fill="none" stroke="#22d3ee" strokeWidth="1.3" viewBox="0 0 24 24" opacity="0.4">
+                  <path d="M2 12 C5 7 9 4 14 5 C18 6 21 9 22 12 C21 15 18 18 14 19 C9 20 5 17 2 12Z" strokeDasharray="2 1.5"/>
+                  <path d="M14 5 L19 2 L17 8Z" fill="#0d9488" stroke="none"/>
+                  <circle cx="17" cy="10" r="1.5" fill="#22d3ee" stroke="none"/>
+                  <path d="M7 12 C8.5 10.5 10 10.5 11 12 C10 13.5 8.5 13.5 7 12Z"/>
+                </svg>
+                <p>{mode === "camera"
+                  ? <span>Position your fish in frame<br/><span style={{color:"var(--teal)",fontSize:11}}>Camera access required</span></span>
+                  : <span>Upload a fish photo<br/><span style={{color:"var(--teal)",fontSize:11}}>Supports JPG, PNG, WEBP</span></span>
+                }</p>
+              </div>
+            )}
+            {analyzing && (
+              <div className="aq-overlay">
+                <div className="aq-sonar"><div className="aq-ring"/><div className="aq-ring"/><div className="aq-ring"/><div className="aq-sdot"/></div>
+                <div className="aq-atxt">Identifying species…</div>
+              </div>
+            )}
+          </div>
+
+          <div className="aq-controls">
+            <button className="aq-btn-primary" disabled={!hasImage || analyzing} onClick={captureAndAnalyze}>
+              <svg width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M2 12 C4 8 7 4.5 12 4.5 C17 4.5 20 8 22 12 C20 16 17 19.5 12 19.5 C7 19.5 4 16 2 12Z"/></svg>
+              SCAN FISH
+            </button>
+            {mode === "upload" && (
+              <label className="aq-btn-sec" style={{ cursor: "pointer" }}>
+                <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Browse File
+                <input type="file" accept="image/*" style={{ display: "none" }} onChange={handleFile}/>
+              </label>
+            )}
+            <button className="aq-btn-sec" onClick={reset}>
+              <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+              Reset
+            </button>
+          </div>
+          {error && <div className="aq-err">{error}</div>}
+        </div>
+
+        {/* Results */}
+        {fish && (
+          <div>
+            <div className="aq-label" style={{ marginTop: 32 }}>Identification Results</div>
+            <div className="aq-card">
+              <div className="aq-hero">
+                <div className="aq-img-panel">
+                  {previewSrc && <img src={previewSrc} alt={fish.commonName}/>}
+                  <div className="aq-badge">⬡ {fish.confidence} confidence</div>
+                </div>
+                <div className="aq-summary">
+                  <div className="aq-family">{fish.family}</div>
+                  <div className="aq-name">{fish.commonName}</div>
+                  <div className="aq-sci">{fish.scientificName}</div>
+                  <div className="aq-tags">
+                    <span className="aq-tag h">{fish.habitat}</span>
+                    <span className="aq-tag s">{fish.conservationStatus}</span>
+                    <span className="aq-tag e">Edible: {fish.isEdible}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="aq-desc">{fish.description}</div>
+              <div className="aq-grid">
+                {[["Distribution",fish.distribution],["Diet",fish.diet],["Avg. Length",fish.averageLength],["Max Weight",fish.maxWeight],["Lifespan",fish.lifespan],["Conservation",fish.conservationStatus]].map(([l,v]) => (
+                  <div key={l} className="aq-ditem"><div className="aq-dlabel">{l}</div><div className="aq-dval">{v}</div></div>
+                ))}
+              </div>
+              <div className="aq-fact">
+                <div className="aq-fact-icon">🐟</div>
+                <div><div className="aq-fact-lbl">Did You Know?</div><div className="aq-fact-txt">{fish.funFact}</div></div>
+              </div>
+              <div className="aq-share">
+                <span className="aq-share-lbl">Share</span>
+                <button className="aq-sbtn tw" onClick={() => shareOn("twitter")}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                  X / Twitter
+                </button>
+                <button className="aq-sbtn fb" onClick={() => shareOn("facebook")}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                  Facebook
+                </button>
+                <button className="aq-sbtn wa" onClick={() => shareOn("whatsapp")}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                  WhatsApp
+                </button>
+                <button className="aq-sbtn cp" onClick={copyInfo}>
+                  <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                  Copy
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+      </div>
+      {toast && <div className="aq-toast">{toast}</div>}
+    </div>
+  );
+}
