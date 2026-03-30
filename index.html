@@ -8,25 +8,18 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
 
-  <!-- TensorFlow.js loaded as classic scripts -->
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.1/dist/mobilenet.min.js"></script>
-
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
       --ocean-deep: #020d18;
-      --ocean-mid: #061a2e;
-      --ocean-surface: #0a2740;
       --biolum: #00f5c4;
       --coral: #ff6b6b;
       --sand: #f4d58d;
-      --foam: #e8f4f8;
-      --glass: rgba(0, 245, 196, 0.08);
+      --glass: rgba(0, 245, 196, 0.07);
       --glass-border: rgba(0, 245, 196, 0.15);
       --text-primary: #e8f4f8;
-      --text-secondary: rgba(232, 244, 248, 0.6);
+      --text-secondary: rgba(232, 244, 248, 0.55);
     }
 
     body {
@@ -41,9 +34,9 @@
       content: '';
       position: fixed; inset: 0;
       background:
-        radial-gradient(ellipse at 20% 50%, rgba(0, 100, 180, 0.15) 0%, transparent 60%),
-        radial-gradient(ellipse at 80% 20%, rgba(0, 245, 196, 0.06) 0%, transparent 50%),
-        radial-gradient(ellipse at 60% 80%, rgba(0, 50, 120, 0.2) 0%, transparent 60%);
+        radial-gradient(ellipse at 15% 50%, rgba(0,100,180,0.14) 0%, transparent 55%),
+        radial-gradient(ellipse at 85% 20%, rgba(0,245,196,0.05) 0%, transparent 50%),
+        radial-gradient(ellipse at 55% 85%, rgba(0,50,120,0.18) 0%, transparent 55%);
       pointer-events: none; z-index: 0;
     }
 
@@ -51,227 +44,239 @@
     .particle {
       position: absolute; border-radius: 50%;
       background: var(--biolum); opacity: 0;
-      animation: float-up linear infinite;
+      animation: floatUp linear infinite;
     }
-    @keyframes float-up {
-      0% { transform: translateY(100vh); opacity: 0; }
-      10% { opacity: 0.5; }
-      90% { opacity: 0.2; }
+    @keyframes floatUp {
+      0%   { transform: translateY(100vh); opacity: 0; }
+      10%  { opacity: 0.45; }
+      90%  { opacity: 0.15; }
       100% { transform: translateY(-10vh); opacity: 0; }
     }
 
     header {
       position: relative; z-index: 10;
       display: flex; align-items: center; justify-content: space-between;
-      padding: 1.25rem 2rem;
+      padding: 1.1rem 2rem;
       border-bottom: 1px solid var(--glass-border);
-      backdrop-filter: blur(12px);
-      background: rgba(2, 13, 24, 0.8);
+      background: rgba(2,13,24,0.85);
+      backdrop-filter: blur(14px);
     }
-    .logo { display: flex; align-items: center; gap: 0.75rem; }
+    .logo { display: flex; align-items: center; gap: 0.7rem; }
     .logo-icon {
-      width: 40px; height: 40px;
+      width: 38px; height: 38px;
       background: linear-gradient(135deg, var(--biolum), #00a3e0);
       border-radius: 10px; display: grid; place-items: center;
-      font-size: 1.3rem;
-      box-shadow: 0 0 20px rgba(0, 245, 196, 0.35);
+      font-size: 1.25rem;
+      box-shadow: 0 0 18px rgba(0,245,196,0.35);
     }
-    .logo-text {
-      font-family: 'Syne', sans-serif; font-size: 1.4rem; font-weight: 800;
+    .logo-name {
+      font-family: 'Syne', sans-serif; font-size: 1.35rem; font-weight: 800;
       background: linear-gradient(90deg, var(--biolum), #a8edff);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
-    .logo-sub { font-size: 0.6rem; color: var(--text-secondary); letter-spacing: 0.15em; text-transform: uppercase; }
-    .header-badge {
-      font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase;
+    .logo-sub { font-size: 0.58rem; color: var(--text-secondary); letter-spacing: 0.14em; text-transform: uppercase; }
+    .header-pill {
+      font-size: 0.6rem; letter-spacing: 0.09em; text-transform: uppercase;
       color: var(--biolum); border: 1px solid var(--glass-border);
-      padding: 0.35rem 0.8rem; border-radius: 20px; background: var(--glass);
+      padding: 0.32rem 0.75rem; border-radius: 20px; background: var(--glass);
     }
 
     main {
       position: relative; z-index: 1;
-      max-width: 1100px; margin: 0 auto;
-      padding: 2rem 1.5rem 4rem;
+      max-width: 1080px; margin: 0 auto;
+      padding: 2rem 1.25rem 4rem;
     }
 
-    .hero { text-align: center; padding: 1.5rem 0 2.5rem; }
+    .hero { text-align: center; padding: 1.25rem 0 2.25rem; }
     .hero h1 {
       font-family: 'Syne', sans-serif;
-      font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 800;
-      line-height: 1.1; letter-spacing: -0.03em; margin-bottom: 0.75rem;
+      font-size: clamp(1.9rem, 5vw, 3.2rem); font-weight: 800;
+      line-height: 1.1; letter-spacing: -0.03em; margin-bottom: 0.65rem;
     }
     .hero h1 span { color: var(--biolum); }
-    .hero p { color: var(--text-secondary); font-size: 0.9rem; max-width: 440px; margin: 0 auto; line-height: 1.7; }
+    .hero p { color: var(--text-secondary); font-size: 0.87rem; max-width: 420px; margin: 0 auto; line-height: 1.75; }
 
-    .app-grid {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;
-    }
-    @media (max-width: 720px) { .app-grid { grid-template-columns: 1fr; } }
+    .app-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+    @media (max-width: 700px) { .app-grid { grid-template-columns: 1fr; } }
 
     .panel {
       background: var(--glass); border: 1px solid var(--glass-border);
-      border-radius: 16px; overflow: hidden; backdrop-filter: blur(8px);
+      border-radius: 14px; overflow: hidden; backdrop-filter: blur(8px);
     }
-    .panel-header {
-      padding: 0.85rem 1.25rem; border-bottom: 1px solid var(--glass-border);
-      display: flex; align-items: center; gap: 0.6rem;
+    .panel-hdr {
+      padding: 0.8rem 1.15rem; border-bottom: 1px solid var(--glass-border);
+      display: flex; align-items: center; gap: 0.55rem;
     }
-    .panel-dot { width: 7px; height: 7px; border-radius: 50%; }
-    .panel-label { font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-secondary); }
+    .phdr-dot { width: 7px; height: 7px; border-radius: 50%; }
+    .phdr-lbl { font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-secondary); }
 
-    /* Camera */
-    .camera-wrap {
+    .cam-wrap {
       position: relative; background: #000;
       aspect-ratio: 4/3; overflow: hidden;
     }
-    #video {
-      width: 100%; height: 100%; object-fit: cover;
-      display: none;
-    }
-    #snap-canvas {
-      width: 100%; height: 100%; object-fit: cover;
-      display: none; position: absolute; inset: 0;
-    }
-    .cam-placeholder {
+    #video { width: 100%; height: 100%; object-fit: cover; display: none; }
+    #snap-canvas { width: 100%; height: 100%; object-fit: cover; display: none; position: absolute; inset: 0; }
+
+    .cam-ph {
       position: absolute; inset: 0;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
-      gap: 0.5rem; color: var(--text-secondary); font-size: 0.75rem;
+      gap: 0.45rem; color: var(--text-secondary); font-size: 0.73rem;
     }
-    .cam-placeholder-icon { font-size: 2.5rem; opacity: 0.25; }
+    .cam-ph-icon { font-size: 2.4rem; opacity: 0.22; }
 
-    /* Scan overlay */
-    .scan-overlay { position: absolute; inset: 0; pointer-events: none; }
-    .scan-corner {
-      position: absolute; width: 28px; height: 28px;
-      border-color: var(--biolum); border-style: solid; opacity: 0.7;
-    }
-    .tl { top:14px; left:14px; border-width: 2px 0 0 2px; }
-    .tr { top:14px; right:14px; border-width: 2px 2px 0 0; }
-    .bl { bottom:14px; left:14px; border-width: 0 0 2px 2px; }
-    .br { bottom:14px; right:14px; border-width: 0 2px 2px 0; }
-    .scan-line {
-      position: absolute; left: 14px; right: 14px; height: 1px;
+    .scan-ovl { position: absolute; inset: 0; pointer-events: none; }
+    .sc { position: absolute; width: 26px; height: 26px; border-color: var(--biolum); border-style: solid; opacity: 0.65; }
+    .sc.tl { top:12px; left:12px; border-width:2px 0 0 2px; }
+    .sc.tr { top:12px; right:12px; border-width:2px 2px 0 0; }
+    .sc.bl { bottom:12px; left:12px; border-width:0 0 2px 2px; }
+    .sc.br { bottom:12px; right:12px; border-width:0 2px 2px 0; }
+    .scan-ln {
+      position: absolute; left:12px; right:12px; height:1px;
       background: linear-gradient(90deg, transparent, var(--biolum), transparent);
-      top: 14px; opacity: 0;
+      top:12px; opacity:0;
     }
-    .scan-line.active { opacity: 1; animation: scanMove 2s ease-in-out infinite; }
-    @keyframes scanMove { 0% { top: 14px; } 100% { top: calc(100% - 14px); } }
+    .scan-ln.go { opacity:1; animation: scanMove 2s ease-in-out infinite; }
+    @keyframes scanMove { 0%{top:12px} 100%{top:calc(100% - 12px)} }
 
-    /* Controls */
-    .controls { padding: 1rem 1.1rem; display: flex; flex-direction: column; gap: 0.6rem; }
+    .ctrls { padding: 0.9rem 1.1rem; display: flex; flex-direction: column; gap: 0.55rem; }
 
     .model-status {
-      display: flex; align-items: center; justify-content: center; gap: 0.5rem;
-      font-size: 0.68rem; color: var(--text-secondary); padding: 0.4rem;
+      display: flex; align-items: center; justify-content: center; gap: 0.45rem;
+      font-size: 0.65rem; color: var(--text-secondary); padding: 0.3rem;
     }
-    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: #444; transition: background 0.3s; }
-    .status-dot.loading { background: var(--sand); animation: blink 1s infinite; }
-    .status-dot.ready { background: var(--biolum); }
-    .status-dot.error { background: var(--coral); }
+    .sdot { width: 6px; height: 6px; border-radius: 50%; background: #444; transition: background 0.3s; }
+    .sdot.loading { background: var(--sand); animation: blink 1s infinite; }
+    .sdot.ready   { background: var(--biolum); }
+    .sdot.error   { background: var(--coral); }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
 
     .btn {
-      display: flex; align-items: center; justify-content: center; gap: 0.45rem;
-      padding: 0.7rem 1rem; border-radius: 10px;
-      font-family: 'DM Mono', monospace; font-size: 0.75rem; font-weight: 500;
+      display: flex; align-items: center; justify-content: center; gap: 0.4rem;
+      padding: 0.65rem 1rem; border-radius: 9px;
+      font-family: 'DM Mono', monospace; font-size: 0.72rem; font-weight: 500;
       letter-spacing: 0.05em; text-transform: uppercase;
-      cursor: pointer; border: none; transition: all 0.18s;
+      cursor: pointer; border: none; transition: all 0.17s;
     }
-    .btn:disabled { opacity: 0.35; cursor: not-allowed; }
-    .btn-primary { background: var(--biolum); color: var(--ocean-deep); }
-    .btn-primary:not(:disabled):hover { background: #00e6b8; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,245,196,0.3); }
+    .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .btn-primary  { background: var(--biolum); color: var(--ocean-deep); }
+    .btn-primary:not(:disabled):hover  { background: #00e6b8; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(0,245,196,0.28); }
     .btn-secondary { background: var(--glass); color: var(--text-primary); border: 1px solid var(--glass-border); }
-    .btn-secondary:not(:disabled):hover { background: rgba(0,245,196,0.12); border-color: var(--biolum); }
+    .btn-secondary:not(:disabled):hover { background: rgba(0,245,196,0.1); border-color: var(--biolum); }
 
-    .upload-label {
-      display: flex; align-items: center; justify-content: center; gap: 0.45rem;
-      padding: 0.7rem 1rem; border-radius: 10px;
+    .upload-lbl {
+      display: flex; align-items: center; justify-content: center; gap: 0.4rem;
+      padding: 0.65rem 1rem; border-radius: 9px;
       border: 1.5px dashed var(--glass-border);
-      font-family: 'DM Mono', monospace; font-size: 0.75rem;
-      color: var(--text-secondary); cursor: pointer; transition: all 0.18s;
+      font-family: 'DM Mono', monospace; font-size: 0.72rem;
+      color: var(--text-secondary); cursor: pointer; transition: all 0.17s;
       text-transform: uppercase; letter-spacing: 0.05em;
     }
-    .upload-label:hover { border-color: var(--biolum); color: var(--biolum); background: var(--glass); }
+    .upload-lbl:hover { border-color: var(--biolum); color: var(--biolum); background: var(--glass); }
 
-    /* Result panel */
-    .result-empty {
-      padding: 3rem 1.5rem; text-align: center;
-      color: var(--text-secondary); font-size: 0.78rem; line-height: 1.9;
+    .api-key-section {
+      margin-top: 0.2rem;
+      background: rgba(0,0,0,0.25);
+      border: 1px solid var(--glass-border);
+      border-radius: 9px; padding: 0.7rem 0.85rem;
     }
-    .result-empty-icon { font-size: 3rem; margin-bottom: 0.75rem; opacity: 0.2; display: block; }
-    .result-empty strong { font-family: 'Syne', sans-serif; color: var(--text-primary); display: block; margin-bottom: 0.4rem; }
+    .api-key-label {
+      font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.1em;
+      color: var(--text-secondary); margin-bottom: 0.4rem; display: block;
+    }
+    .api-key-row { display: flex; gap: 0.4rem; }
+    .api-key-input {
+      flex: 1; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border);
+      border-radius: 7px; padding: 0.45rem 0.65rem;
+      font-family: 'DM Mono', monospace; font-size: 0.7rem;
+      color: var(--text-primary); outline: none; transition: border-color 0.2s;
+    }
+    .api-key-input:focus { border-color: var(--biolum); }
+    .api-key-input::placeholder { color: rgba(232,244,248,0.22); }
+    .api-key-save {
+      padding: 0.45rem 0.75rem; border-radius: 7px;
+      background: var(--biolum); color: var(--ocean-deep);
+      font-family: 'DM Mono', monospace; font-size: 0.68rem; font-weight: 600;
+      cursor: pointer; border: none; white-space: nowrap; transition: background 0.17s;
+    }
+    .api-key-save:hover { background: #00e6b8; }
+    .api-key-note { font-size: 0.58rem; color: var(--text-secondary); margin-top: 0.32rem; line-height: 1.5; }
+    .api-key-note a { color: var(--biolum); text-decoration: none; }
+
+    /* Results */
+    .result-empty {
+      padding: 2.5rem 1.25rem; text-align: center;
+      color: var(--text-secondary); font-size: 0.76rem; line-height: 1.9;
+    }
+    .re-icon { font-size: 2.8rem; display: block; margin-bottom: 0.65rem; opacity: 0.2; }
+    .result-empty strong { font-family: 'Syne', sans-serif; color: var(--text-primary); display: block; margin-bottom: 0.35rem; }
 
     .scanning-state {
       display: none; flex-direction: column; align-items: center;
-      gap: 1rem; padding: 3rem 1.5rem; text-align: center;
+      gap: 0.9rem; padding: 2.5rem 1.25rem; text-align: center;
     }
     .scanning-state.show { display: flex; }
-    .sonar { position: relative; width: 72px; height: 72px; }
+    .sonar { position: relative; width: 68px; height: 68px; }
     .sonar-ring {
       position: absolute; inset: 0; border-radius: 50%;
       border: 2px solid var(--biolum);
-      animation: sonarPulse 1.6s ease-out infinite;
+      animation: sonarPulse 1.7s ease-out infinite;
     }
-    .sonar-ring:nth-child(2) { animation-delay: 0.53s; }
-    .sonar-ring:nth-child(3) { animation-delay: 1.06s; }
-    @keyframes sonarPulse { 0%{transform:scale(0.2);opacity:1} 100%{transform:scale(1.3);opacity:0} }
-    .sonar-inner { position: absolute; inset: 0; display: grid; place-items: center; font-size: 1.7rem; }
-    .scanning-label { font-size: 0.78rem; color: var(--text-secondary); }
-    .scanning-label em { color: var(--biolum); font-style: normal; }
+    .sonar-ring:nth-child(2) { animation-delay: 0.57s; }
+    .sonar-ring:nth-child(3) { animation-delay: 1.14s; }
+    @keyframes sonarPulse { 0%{transform:scale(0.2);opacity:1} 100%{transform:scale(1.4);opacity:0} }
+    .sonar-inner { position: absolute; inset: 0; display: grid; place-items: center; font-size: 1.6rem; }
+    .scan-lbl { font-size: 0.75rem; color: var(--text-secondary); }
+    .scan-lbl em { color: var(--biolum); font-style: normal; }
 
     .result-card { display: none; }
     .result-card.show { display: block; }
 
     .result-top {
-      padding: 1.25rem 1.25rem 1rem;
-      display: flex; gap: 0.9rem; align-items: flex-start;
+      padding: 1.1rem 1.15rem 0.9rem;
+      display: flex; gap: 0.85rem; align-items: flex-start;
       border-bottom: 1px solid var(--glass-border);
     }
-    .fish-badge {
-      width: 52px; height: 52px; border-radius: 12px;
-      display: grid; place-items: center; font-size: 1.8rem; flex-shrink: 0;
-    }
-    .fish-name { font-family: 'Syne', sans-serif; font-size: 1.35rem; font-weight: 700; line-height: 1.2; }
-    .fish-sci { font-size: 0.72rem; font-style: italic; color: var(--text-secondary); margin-top: 0.15rem; }
-    .fish-conf { font-size: 0.65rem; color: var(--biolum); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 0.4rem; }
+    .fish-badge { width: 50px; height: 50px; border-radius: 11px; display: grid; place-items: center; font-size: 1.7rem; flex-shrink: 0; }
+    .fish-name { font-family: 'Syne', sans-serif; font-size: 1.25rem; font-weight: 700; line-height: 1.2; }
+    .fish-sci  { font-size: 0.7rem; font-style: italic; color: var(--text-secondary); margin-top: 0.12rem; }
+    .fish-conf { font-size: 0.62rem; color: var(--biolum); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 0.35rem; }
 
-    .result-body { padding: 1rem 1.25rem; }
+    .result-body { padding: 0.9rem 1.15rem; }
 
     .conservation {
-      display: inline-flex; align-items: center; gap: 0.35rem;
-      font-size: 0.68rem; padding: 0.3rem 0.7rem; border-radius: 20px;
-      margin-bottom: 1rem; border: 1px solid;
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      font-size: 0.65rem; padding: 0.28rem 0.65rem; border-radius: 20px;
+      margin-bottom: 0.85rem; border: 1px solid;
     }
 
-    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.55rem; margin-bottom: 1rem; }
-    .info-chip {
-      background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border);
-      border-radius: 8px; padding: 0.55rem 0.7rem;
-    }
-    .chip-label { font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-secondary); margin-bottom: 0.15rem; }
-    .chip-val { font-size: 0.76rem; }
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 0.9rem; }
+    .info-chip { background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); border-radius: 7px; padding: 0.5rem 0.65rem; }
+    .chip-lbl { font-size: 0.56rem; text-transform: uppercase; letter-spacing: 0.09em; color: var(--text-secondary); margin-bottom: 0.12rem; }
+    .chip-val { font-size: 0.73rem; }
 
-    .fish-desc { font-size: 0.79rem; line-height: 1.75; color: var(--text-secondary); margin-bottom: 1rem; }
+    .fish-desc { font-size: 0.77rem; line-height: 1.75; color: var(--text-secondary); margin-bottom: 0.9rem; }
 
     .fun-fact {
-      background: rgba(0,245,196,0.05); border: 1px solid rgba(0,245,196,0.12);
+      background: rgba(0,245,196,0.05); border: 1px solid rgba(0,245,196,0.1);
       border-left: 3px solid var(--biolum); border-radius: 0 8px 8px 0;
-      padding: 0.75rem 0.9rem; margin-bottom: 1rem;
+      padding: 0.7rem 0.85rem; margin-bottom: 0.9rem;
     }
-    .fun-fact-label { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--biolum); margin-bottom: 0.25rem; }
-    .fun-fact-text { font-size: 0.77rem; line-height: 1.65; }
+    .ff-lbl { font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.09em; color: var(--biolum); margin-bottom: 0.22rem; }
+    .ff-txt  { font-size: 0.75rem; line-height: 1.65; }
 
-    .share-section { padding: 0.9rem 1.25rem; border-top: 1px solid var(--glass-border); }
-    .share-label { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-secondary); margin-bottom: 0.6rem; }
-    .share-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-    .share-btn {
-      display: flex; align-items: center; gap: 0.35rem;
-      padding: 0.5rem 0.8rem; border-radius: 8px;
-      font-family: 'DM Mono', monospace; font-size: 0.67rem;
-      cursor: pointer; border: 1px solid; transition: all 0.18s; background: transparent;
-      letter-spacing: 0.04em;
+    .extra-chips { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.9rem; }
+    .extra-chip { font-size: 0.68rem; padding: 0.3rem 0.65rem; border-radius: 20px; border: 1px solid var(--glass-border); color: var(--text-secondary); }
+
+    .share-section { padding: 0.85rem 1.15rem; border-top: 1px solid var(--glass-border); }
+    .share-lbl { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.09em; color: var(--text-secondary); margin-bottom: 0.55rem; }
+    .share-row { display: flex; gap: 0.45rem; flex-wrap: wrap; }
+    .sbtn {
+      display: flex; align-items: center; gap: 0.32rem;
+      padding: 0.45rem 0.75rem; border-radius: 7px;
+      font-family: 'DM Mono', monospace; font-size: 0.64rem;
+      cursor: pointer; border: 1px solid; transition: all 0.17s; background: transparent;
     }
-    .share-btn:hover { transform: translateY(-1px); }
+    .sbtn:hover { transform: translateY(-1px); }
     .s-tw { color: #1da1f2; border-color: rgba(29,161,242,0.3); }
     .s-tw:hover { background: rgba(29,161,242,0.1); }
     .s-fb { color: #4267b2; border-color: rgba(66,103,178,0.3); }
@@ -284,9 +289,9 @@
     .toast {
       position: fixed; bottom: 2rem; left: 50%;
       transform: translateX(-50%) translateY(80px);
-      background: var(--ocean-surface); border: 1px solid var(--glass-border);
-      color: var(--biolum); padding: 0.65rem 1.4rem;
-      border-radius: 30px; font-size: 0.76rem;
+      background: #0a2740; border: 1px solid var(--glass-border);
+      color: var(--biolum); padding: 0.6rem 1.3rem;
+      border-radius: 30px; font-size: 0.73rem;
       transition: transform 0.3s ease; z-index: 999;
       backdrop-filter: blur(12px); white-space: nowrap;
     }
@@ -294,10 +299,9 @@
 
     footer {
       position: relative; z-index: 1; text-align: center;
-      padding: 1.5rem; font-size: 0.65rem; color: var(--text-secondary);
+      padding: 1.3rem; font-size: 0.62rem; color: var(--text-secondary);
       border-top: 1px solid var(--glass-border);
     }
-
     canvas#share-canvas { display: none; }
   </style>
 </head>
@@ -309,76 +313,82 @@
   <div class="logo">
     <div class="logo-icon">🐟</div>
     <div>
-      <div class="logo-text">AquaScan</div>
+      <div class="logo-name">AquaScan</div>
       <div class="logo-sub">AI Fish Identifier</div>
     </div>
   </div>
-  <div class="header-badge">TensorFlow.js</div>
+  <div class="header-pill">Claude Vision AI</div>
 </header>
 
 <main>
   <div class="hero">
     <h1>Identify Any Fish<br/><span>Instantly</span></h1>
-    <p>Point your camera at a fish or upload a photo — our on-device AI identifies the species and reveals everything about it.</p>
+    <p>Point your camera at a fish or upload a photo — Claude Vision AI identifies the species and reveals everything about it.</p>
   </div>
 
   <div class="app-grid">
 
-    <!-- LEFT: Camera + Upload -->
+    <!-- Scanner -->
     <div class="panel">
-      <div class="panel-header">
-        <div class="panel-dot" style="background:var(--biolum)"></div>
-        <span class="panel-label">Scanner</span>
+      <div class="panel-hdr">
+        <div class="phdr-dot" style="background:var(--biolum)"></div>
+        <span class="phdr-lbl">Scanner</span>
       </div>
 
-      <div class="camera-wrap">
+      <div class="cam-wrap">
         <video id="video" autoplay muted playsinline></video>
         <canvas id="snap-canvas"></canvas>
-        <div class="cam-placeholder" id="cam-placeholder">
-          <div class="cam-placeholder-icon">📷</div>
+        <div class="cam-ph" id="cam-ph">
+          <div class="cam-ph-icon">📷</div>
           <span>Camera not started</span>
         </div>
-        <div class="scan-overlay">
-          <div class="scan-corner tl"></div>
-          <div class="scan-corner tr"></div>
-          <div class="scan-corner bl"></div>
-          <div class="scan-corner br"></div>
-          <div class="scan-line" id="scan-line"></div>
+        <div class="scan-ovl">
+          <div class="sc tl"></div><div class="sc tr"></div>
+          <div class="sc bl"></div><div class="sc br"></div>
+          <div class="scan-ln" id="scan-ln"></div>
         </div>
       </div>
 
-      <div class="controls">
+      <div class="ctrls">
         <div class="model-status">
-          <div class="status-dot loading" id="status-dot"></div>
-          <span id="status-text">Loading AI model…</span>
+          <div class="sdot ready" id="sdot"></div>
+          <span id="stext">Claude Vision ready</span>
         </div>
 
         <button class="btn btn-primary" id="btn-start">📷 Start Camera</button>
         <button class="btn btn-primary" id="btn-scan" style="display:none">🔍 Scan Fish</button>
         <button class="btn btn-secondary" id="btn-stop" style="display:none">⏹ Stop Camera</button>
 
-        <label class="upload-label" for="file-input">
-          📂 Upload Image to Scan
-        </label>
+        <label class="upload-lbl" for="file-input">📂 Upload Image to Scan</label>
         <input type="file" id="file-input" accept="image/*" style="display:none" />
+
+        <div class="api-key-section">
+          <span class="api-key-label">🔑 Anthropic API Key</span>
+          <div class="api-key-row">
+            <input type="password" class="api-key-input" id="api-key-input" placeholder="sk-ant-api03-..." />
+            <button class="api-key-save" id="api-key-save">Save</button>
+          </div>
+          <div class="api-key-note">
+            Stored in your browser only. Free at
+            <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- RIGHT: Results -->
+    <!-- Results -->
     <div class="panel">
-      <div class="panel-header">
-        <div class="panel-dot" style="background:#457b9d"></div>
-        <span class="panel-label">Species Info</span>
+      <div class="panel-hdr">
+        <div class="phdr-dot" style="background:#457b9d"></div>
+        <span class="phdr-lbl">Species Info</span>
       </div>
 
-      <!-- Empty -->
       <div class="result-empty" id="result-empty">
-        <span class="result-empty-icon">🐡</span>
+        <span class="re-icon">🐡</span>
         <strong>Ready to Scan</strong>
-        Start your camera and aim at a fish,<br/>or upload a photo to identify the species.
+        Enter your API key, then start the camera<br/>or upload a fish photo to identify it.
       </div>
 
-      <!-- Scanning -->
       <div class="scanning-state" id="scanning-state">
         <div class="sonar">
           <div class="sonar-ring"></div>
@@ -386,42 +396,42 @@
           <div class="sonar-ring"></div>
           <div class="sonar-inner">🐟</div>
         </div>
-        <div class="scanning-label">Analyzing… <em>identifying species</em></div>
+        <div class="scan-lbl">Analyzing image… <em>asking Claude Vision</em></div>
       </div>
 
-      <!-- Result -->
       <div class="result-card" id="result-card">
         <div class="result-top">
           <div class="fish-badge" id="r-badge">🐠</div>
           <div>
             <div class="fish-name" id="r-name">–</div>
-            <div class="fish-sci" id="r-sci">–</div>
+            <div class="fish-sci"  id="r-sci">–</div>
             <div class="fish-conf" id="r-conf"></div>
           </div>
         </div>
         <div class="result-body">
           <div class="conservation" id="r-conservation"></div>
           <div class="info-grid">
-            <div class="info-chip"><div class="chip-label">Family</div><div class="chip-val" id="r-family">–</div></div>
-            <div class="info-chip"><div class="chip-label">Habitat</div><div class="chip-val" id="r-habitat">–</div></div>
-            <div class="info-chip"><div class="chip-label">Size</div><div class="chip-val" id="r-size">–</div></div>
-            <div class="info-chip"><div class="chip-label">Lifespan</div><div class="chip-val" id="r-lifespan">–</div></div>
-            <div class="info-chip"><div class="chip-label">Origin</div><div class="chip-val" id="r-origin">–</div></div>
-            <div class="info-chip"><div class="chip-label">Water Temp</div><div class="chip-val" id="r-temp">–</div></div>
+            <div class="info-chip"><div class="chip-lbl">Family</div><div class="chip-val" id="r-family">–</div></div>
+            <div class="info-chip"><div class="chip-lbl">Habitat</div><div class="chip-val" id="r-habitat">–</div></div>
+            <div class="info-chip"><div class="chip-lbl">Size</div><div class="chip-val" id="r-size">–</div></div>
+            <div class="info-chip"><div class="chip-lbl">Lifespan</div><div class="chip-val" id="r-lifespan">–</div></div>
+            <div class="info-chip"><div class="chip-lbl">Origin</div><div class="chip-val" id="r-origin">–</div></div>
+            <div class="info-chip"><div class="chip-lbl">Water Temp</div><div class="chip-val" id="r-temp">–</div></div>
           </div>
+          <div class="extra-chips" id="r-extra"></div>
           <div class="fish-desc" id="r-desc"></div>
           <div class="fun-fact">
-            <div class="fun-fact-label">💡 Fun Fact</div>
-            <div class="fun-fact-text" id="r-fact"></div>
+            <div class="ff-lbl">💡 Fun Fact</div>
+            <div class="ff-txt" id="r-fact"></div>
           </div>
         </div>
         <div class="share-section">
-          <div class="share-label">Share this discovery</div>
+          <div class="share-lbl">Share this discovery</div>
           <div class="share-row">
-            <button class="share-btn s-tw" onclick="shareTwitter()">𝕏 Twitter</button>
-            <button class="share-btn s-fb" onclick="shareFacebook()">f Facebook</button>
-            <button class="share-btn s-cp" onclick="copyInfo()">📋 Copy</button>
-            <button class="share-btn s-dl" onclick="downloadCard()">⬇ Card</button>
+            <button class="sbtn s-tw" onclick="shareTwitter()">𝕏 Twitter</button>
+            <button class="sbtn s-fb" onclick="shareFacebook()">f Facebook</button>
+            <button class="sbtn s-cp" onclick="copyInfo()">📋 Copy</button>
+            <button class="sbtn s-dl" onclick="downloadCard()">⬇ Card</button>
           </div>
         </div>
       </div>
@@ -429,238 +439,250 @@
   </div>
 </main>
 
-<footer>AquaScan · TensorFlow.js + MobileNet · All processing happens on your device · No data sent to servers</footer>
+<footer>AquaScan · Claude Vision AI · Images are never stored · Processing happens via Anthropic API</footer>
 <div class="toast" id="toast"></div>
 <canvas id="share-canvas"></canvas>
 
 <script>
-// ─── Fish Database ───────────────────────────────────────────────────────────
-var FISH = {
-  goldfish:  { name:"Goldfish", scientific:"Carassius auratus", family:"Cyprinidae", habitat:"Freshwater", origin:"East Asia", size:"20–45 cm", lifespan:"10–15 yrs", diet:"Omnivore", status:"Least Concern", desc:"One of the earliest domesticated fish, goldfish were selectively bred in ancient China over 1,000 years ago. They exhibit a wide variety of colors, fin shapes, and body types.", fact:"Goldfish have a memory span of at least 3 months — the 3-second myth is completely false!", temp:"18–24°C", emoji:"🐠", color:"#f4a261" },
-  shark:     { name:"Great White Shark", scientific:"Carcharodon carcharias", family:"Lamnidae", habitat:"Marine – open ocean", origin:"Worldwide", size:"4–6 m", lifespan:"70+ yrs", diet:"Carnivore", status:"Vulnerable", desc:"The world's largest predatory fish. Despite a fearsome reputation, attacks on humans are rare and often cases of mistaken identity.", fact:"Great whites can detect a single drop of blood in 100 liters of water.", temp:"12–24°C", emoji:"🦈", color:"#457b9d" },
-  clownfish: { name:"Clownfish", scientific:"Amphiprioninae", family:"Pomacentridae", habitat:"Marine – tropical reefs", origin:"Indo-Pacific", size:"7–17 cm", lifespan:"6–10 yrs", diet:"Omnivore", status:"Least Concern", desc:"Famous for their symbiotic relationship with sea anemones. They are immune to the anemone's stinging tentacles and are sequential hermaphrodites — all born male.", fact:"All clownfish are born male. When the dominant female dies, the largest male changes sex.", temp:"24–27°C", emoji:"🐠", color:"#e76f51" },
-  tuna:      { name:"Bluefin Tuna", scientific:"Thunnus thynnus", family:"Scombridae", habitat:"Marine – open ocean", origin:"Atlantic & Mediterranean", size:"2–3 m", lifespan:"35–40 yrs", diet:"Carnivore", status:"Endangered", desc:"One of the fastest fish in the ocean at 70 km/h. They are warm-blooded — a rare fish trait — allowing them to thrive in cold waters.", fact:"A single bluefin tuna can fetch over $1 million at auction in Japan.", temp:"10–30°C", emoji:"🐟", color:"#2a9d8f" },
-  salmon:    { name:"Atlantic Salmon", scientific:"Salmo salar", family:"Salmonidae", habitat:"Freshwater & Marine", origin:"North Atlantic", size:"70–150 cm", lifespan:"3–8 yrs", diet:"Carnivore", status:"Least Concern", desc:"Anadromous fish that migrate from the ocean back to freshwater birthstreams to spawn. They navigate using Earth's magnetic field and scent memory.", fact:"Salmon stop eating entirely once they enter freshwater for spawning, surviving on stored body fat.", temp:"6–20°C", emoji:"🐟", color:"#e9c46a" },
-  trout:     { name:"Rainbow Trout", scientific:"Oncorhynchus mykiss", family:"Salmonidae", habitat:"Freshwater", origin:"Pacific coast, North America", size:"30–76 cm", lifespan:"4–6 yrs", diet:"Carnivore", status:"Least Concern", desc:"Named for the distinctive pink stripe along their lateral line. They require cold, well-oxygenated water and are one of the most popular sport fish in the world.", fact:"Rainbow trout can change coloration based on habitat, diet, and breeding — no two fish look identical.", temp:"10–18°C", emoji:"🎣", color:"#48cae4" },
-  tilapia:   { name:"Nile Tilapia", scientific:"Oreochromis niloticus", family:"Cichlidae", habitat:"Freshwater", origin:"Africa & Middle East", size:"30–60 cm", lifespan:"9–11 yrs", diet:"Omnivore", status:"Least Concern", desc:"One of the most farmed fish globally. Hardy and adaptable, capable of surviving in low-oxygen environments and a cornerstone of sustainable aquaculture.", fact:"Some tilapia are mouthbrooders — the mother incubates and protects fry inside her mouth after hatching.", temp:"20–30°C", emoji:"🐠", color:"#52b788" },
-  carp:      { name:"Common Carp", scientific:"Cyprinus carpio", family:"Cyprinidae", habitat:"Freshwater", origin:"Asia & Europe", size:"40–80 cm", lifespan:"20–47 yrs", diet:"Omnivore", status:"Vulnerable", desc:"One of the most widely distributed freshwater fish. Introduced to every continent except Antarctica and considered invasive in many regions.", fact:"The oldest recorded carp 'Hanako' lived in Japan for an estimated 226 years.", temp:"10–25°C", emoji:"🐟", color:"#b5838d" },
-  angelfish: { name:"Freshwater Angelfish", scientific:"Pterophyllum scalare", family:"Cichlidae", habitat:"Freshwater – Amazon", origin:"South America", size:"15–20 cm", lifespan:"10–12 yrs", diet:"Omnivore", status:"Least Concern", desc:"Prized aquarium fish with a distinctive triangular body and flowing fins. They navigate the Amazon using their flattened bodies to move through dense plant stems.", fact:"Angelfish are devoted parents — mated pairs guard and fan their eggs to maintain oxygen flow.", temp:"24–30°C", emoji:"🐠", color:"#c77dff" },
-  bass:      { name:"Largemouth Bass", scientific:"Micropterus salmoides", family:"Centrarchidae", habitat:"Freshwater", origin:"Eastern North America", size:"30–60 cm", lifespan:"10–16 yrs", diet:"Carnivore", status:"Least Concern", desc:"America's most popular game fish and an aggressive apex predator. It ambushes prey from vegetated cover with explosive strikes.", fact:"Largemouth bass can sense prey through pressure changes in the water using their lateral line.", temp:"18–27°C", emoji:"🎣", color:"#588157" },
-  unknown:   { name:"Unidentified Species", scientific:"Species unidentified", family:"Unknown", habitat:"Aquatic", origin:"Unknown", size:"Varies", lifespan:"Varies", diet:"Varies", status:"Unknown", desc:"Our AI could not precisely identify this fish. Try again with a clearer, well-lit photo showing the full body of the fish against a contrasting background.", fact:"There are over 34,000 known fish species — more than all other vertebrate species combined!", temp:"Varies", emoji:"🐡", color:"#90e0ef" }
-};
-
-var KEYWORDS = {
-  goldfish:  ["goldfish","gold fish","carassius","koi","carp"],
-  shark:     ["shark","white shark","tiger shark","hammerhead","lemon shark","bull shark"],
-  clownfish: ["clownfish","clown fish","anemone fish","amphiprion"],
-  tuna:      ["tuna","bluefin","yellowfin","skipjack","albacore"],
-  salmon:    ["salmon","salmo","coho","chinook","sockeye"],
-  trout:     ["trout","rainbow","oncorhynchus","brook trout","steelhead"],
-  tilapia:   ["tilapia","oreochromis","cichlid"],
-  carp:      ["carp","cyprinus"],
-  angelfish: ["angelfish","angel fish","pterophyllum"],
-  bass:      ["bass","largemouth","smallmouth","striped bass","sea bass","perch"]
-};
-
-function matchFish(predictions) {
-  if (!predictions || !predictions.length) return FISH.unknown;
-  for (var i = 0; i < predictions.length; i++) {
-    var label = predictions[i].className.toLowerCase();
-    for (var key in KEYWORDS) {
-      var kws = KEYWORDS[key];
-      for (var j = 0; j < kws.length; j++) {
-        if (label.indexOf(kws[j]) !== -1) {
-          return Object.assign({}, FISH[key], { confidence: predictions[i].probability });
-        }
-      }
-    }
-  }
-  var top = predictions[0];
-  var tl = top.className.toLowerCase();
-  var aquaWords = ["fish","aquatic","marine","sea","ocean","pond","river","coral","reef","fin","gill","scale","swim","water","eel","ray","pike","cod","herring","mackerel","sardine","anchovy"];
-  for (var w = 0; w < aquaWords.length; w++) {
-    if (tl.indexOf(aquaWords[w]) !== -1) {
-      return Object.assign({}, FISH.unknown, { detectedAs: top.className, confidence: top.probability });
-    }
-  }
-  return Object.assign({}, FISH.unknown, { detectedAs: top.className, confidence: top.probability });
-}
-
-// ─── State ───────────────────────────────────────────────────────────────────
-var model = null;
+var apiKey = localStorage.getItem('aquascan_api_key') || '';
 var mediaStream = null;
 var currentFish = null;
 var capturedDataURL = null;
 
-// ─── DOM refs ────────────────────────────────────────────────────────────────
-var video        = document.getElementById('video');
-var snapCanvas   = document.getElementById('snap-canvas');
-var camPlaceholder = document.getElementById('cam-placeholder');
-var btnStart     = document.getElementById('btn-start');
-var btnScan      = document.getElementById('btn-scan');
-var btnStop      = document.getElementById('btn-stop');
-var fileInput    = document.getElementById('file-input');
-var statusDot    = document.getElementById('status-dot');
-var statusText   = document.getElementById('status-text');
-var scanLine     = document.getElementById('scan-line');
+var video      = document.getElementById('video');
+var snapCanvas = document.getElementById('snap-canvas');
+var camPh      = document.getElementById('cam-ph');
+var btnStart   = document.getElementById('btn-start');
+var btnScan    = document.getElementById('btn-scan');
+var btnStop    = document.getElementById('btn-stop');
+var fileInput  = document.getElementById('file-input');
+var scanLn     = document.getElementById('scan-ln');
+var apiInput   = document.getElementById('api-key-input');
 
-// ─── Particles ───────────────────────────────────────────────────────────────
+if (apiKey) { apiInput.value = apiKey; }
+
+document.getElementById('api-key-save').addEventListener('click', function() {
+  var val = apiInput.value.trim();
+  if (!val) { showToast('Please enter your API key.'); return; }
+  if (!val.startsWith('sk-ant-')) { showToast('Key must start with sk-ant-'); return; }
+  apiKey = val;
+  localStorage.setItem('aquascan_api_key', apiKey);
+  setStatus('ready', 'API key saved ✓');
+  showToast('API key saved!');
+});
+
+// Particles
 var pc = document.getElementById('particles');
-for (var p = 0; p < 28; p++) {
+for (var i = 0; i < 26; i++) {
   var el = document.createElement('div');
   el.className = 'particle';
   el.style.left = (Math.random() * 100) + '%';
-  el.style.width = el.style.height = (1 + Math.random() * 3) + 'px';
-  el.style.animationDuration = (8 + Math.random() * 14) + 's';
-  el.style.animationDelay = (Math.random() * 16) + 's';
+  el.style.width = el.style.height = (1 + Math.random() * 2.5) + 'px';
+  el.style.animationDuration = (9 + Math.random() * 14) + 's';
+  el.style.animationDelay    = (Math.random() * 18) + 's';
   pc.appendChild(el);
 }
 
-// ─── Load TF Model ───────────────────────────────────────────────────────────
-function loadModel() {
-  statusDot.className = 'status-dot loading';
-  statusText.textContent = 'Loading AI model…';
-
-  // Wait for mobilenet global to be available
-  var attempts = 0;
-  var interval = setInterval(function() {
-    attempts++;
-    if (typeof mobilenet !== 'undefined' && typeof tf !== 'undefined') {
-      clearInterval(interval);
-      mobilenet.load({ version: 2, alpha: 1.0 }).then(function(m) {
-        model = m;
-        statusDot.className = 'status-dot ready';
-        statusText.textContent = 'AI model ready ✓';
-        btnStart.disabled = false;
-      }).catch(function(err) {
-        console.error('Model load error:', err);
-        statusDot.className = 'status-dot error';
-        statusText.textContent = 'Model failed – check connection';
-      });
-    } else if (attempts > 60) {
-      clearInterval(interval);
-      statusDot.className = 'status-dot error';
-      statusText.textContent = 'TF.js failed to load';
-    }
-  }, 500);
+function setStatus(type, msg) {
+  document.getElementById('sdot').className = 'sdot ' + type;
+  document.getElementById('stext').textContent = msg;
 }
 
-// ─── Camera ──────────────────────────────────────────────────────────────────
+// Camera
 btnStart.addEventListener('click', function() {
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    showToast('Camera not supported in this browser. Please use Chrome or Safari.');
+    showToast('Camera API not available. Use HTTPS or file upload.');
     return;
   }
+  setStatus('loading', 'Requesting camera…');
   navigator.mediaDevices.getUserMedia({
     video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }
   }).then(function(stream) {
     mediaStream = stream;
     video.srcObject = stream;
-    video.onloadedmetadata = function() {
-  video.play();
-};
     video.style.display = 'block';
-    camPlaceholder.style.display = 'none';
+    camPh.style.display = 'none';
     snapCanvas.style.display = 'none';
     btnStart.style.display = 'none';
     btnScan.style.display = 'flex';
     btnStop.style.display = 'flex';
     capturedDataURL = null;
+    setStatus('ready', 'Camera active — aim at fish');
   }).catch(function(err) {
-    console.error('Camera error:', err);
-    if (err.name === 'NotAllowedError') {
-      showToast('Camera permission denied. Please allow camera access and try again.');
-    } else if (err.name === 'NotFoundError') {
-      showToast('No camera found. Please use file upload instead.');
-    } else {
-      showToast('Camera error: ' + err.message);
-    }
+    setStatus('error', 'Camera error');
+    if (err.name === 'NotAllowedError') showToast('Camera permission denied. Allow it in browser settings.');
+    else if (err.name === 'NotFoundError') showToast('No camera detected. Use file upload instead.');
+    else showToast('Camera error: ' + err.message);
   });
 });
 
 btnStop.addEventListener('click', function() {
-  stopCamera();
-});
-
-function stopCamera() {
-  if (mediaStream) {
-    mediaStream.getTracks().forEach(function(t) { t.stop(); });
-    mediaStream = null;
-  }
+  if (mediaStream) { mediaStream.getTracks().forEach(function(t){ t.stop(); }); mediaStream = null; }
   video.srcObject = null;
   video.style.display = 'none';
-  camPlaceholder.style.display = 'flex';
+  camPh.style.display = 'flex';
   btnStart.style.display = 'flex';
   btnScan.style.display = 'none';
   btnStop.style.display = 'none';
-}
-
-// ─── Scan from Camera ────────────────────────────────────────────────────────
-btnScan.addEventListener('click', function() {
-  if (!model) { showToast('AI model not ready yet…'); return; }
-  if (!mediaStream) { showToast('Camera is not active.'); return; }
-
-  var w = video.videoWidth || 640;
-  var h = video.videoHeight || 480;
-  snapCanvas.width = w;
-  snapCanvas.height = h;
-  var ctx = snapCanvas.getContext('2d');
-  ctx.drawImage(video, 0, 0, w, h);
-  snapCanvas.style.display = 'block';
-  capturedDataURL = snapCanvas.toDataURL('image/jpeg', 0.9);
-
-  scanLine.classList.add('active');
-  showScanning();
-
-  model.classify(snapCanvas).then(function(preds) {
-    scanLine.classList.remove('active');
-    showResult(matchFish(preds));
-  }).catch(function(err) {
-    console.error('Classification error:', err);
-    scanLine.classList.remove('active');
-    showResult(FISH.unknown);
-  });
+  setStatus('ready', 'Claude Vision ready');
 });
 
-// ─── Upload Image ────────────────────────────────────────────────────────────
+btnScan.addEventListener('click', function() {
+  if (!checkKey()) return;
+  var w = video.videoWidth  || 640;
+  var h = video.videoHeight || 480;
+  snapCanvas.width  = w;
+  snapCanvas.height = h;
+  snapCanvas.getContext('2d').drawImage(video, 0, 0, w, h);
+  snapCanvas.style.display = 'block';
+  capturedDataURL = snapCanvas.toDataURL('image/jpeg', 0.88);
+  scanLn.classList.add('go');
+  showScanning();
+  callClaude(capturedDataURL, 'image/jpeg');
+});
+
 fileInput.addEventListener('change', function(e) {
   var file = e.target.files && e.target.files[0];
   if (!file) return;
-  if (!model) { showToast('AI model still loading, please wait…'); return; }
+  if (!checkKey()) { fileInput.value = ''; return; }
 
-  var url = URL.createObjectURL(file);
-  var img = new Image();
-  img.onload = function() {
-    var w = img.naturalWidth || img.width;
-    var h = img.naturalHeight || img.height;
-    snapCanvas.width = w;
-    snapCanvas.height = h;
-    var ctx = snapCanvas.getContext('2d');
-    ctx.drawImage(img, 0, 0);
-    snapCanvas.style.display = 'block';
-    video.style.display = 'none';
-    camPlaceholder.style.display = 'none';
-    capturedDataURL = snapCanvas.toDataURL('image/jpeg', 0.9);
-    URL.revokeObjectURL(url);
+  var mime = file.type || 'image/jpeg';
+  var validMimes = ['image/jpeg','image/png','image/gif','image/webp'];
+  if (validMimes.indexOf(mime) === -1) mime = 'image/jpeg';
+
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    var dataURL = ev.target.result;
+    // Show preview
+    var img = new Image();
+    img.onload = function() {
+      var maxW = 1280, maxH = 960;
+      var w = img.naturalWidth, h = img.naturalHeight;
+      if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
+      if (h > maxH) { w = Math.round(w * maxH / h); h = maxH; }
+      snapCanvas.width = w; snapCanvas.height = h;
+      snapCanvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      snapCanvas.style.display = 'block';
+      video.style.display = 'none';
+      camPh.style.display = 'none';
+      capturedDataURL = snapCanvas.toDataURL('image/jpeg', 0.88);
+    };
+    img.src = dataURL;
+
     showScanning();
-
-    model.classify(img).then(function(preds) {
-      showResult(matchFish(preds));
-    }).catch(function(err) {
-      console.error('Classification error:', err);
-      showResult(FISH.unknown);
-    });
+    // Use original dataURL for API (better quality) but re-encode if needed
+    var base64 = dataURL.split(',')[1];
+    callClaude(dataURL, mime);
   };
-  img.onerror = function() {
-    showToast('Could not load image. Please try another file.');
-    URL.revokeObjectURL(url);
-  };
-  img.src = url;
-  // Reset input so same file can be re-uploaded
+  reader.onerror = function() { showToast('Could not read file. Try a different image.'); };
+  reader.readAsDataURL(file);
   fileInput.value = '';
 });
 
-// ─── UI State ────────────────────────────────────────────────────────────────
+function checkKey() {
+  var k = apiInput.value.trim() || apiKey;
+  if (!k) { showToast('Enter your Anthropic API key first.'); apiInput.focus(); return false; }
+  if (!k.startsWith('sk-ant-')) { showToast('Key must start with sk-ant-'); apiInput.focus(); return false; }
+  apiKey = k;
+  return true;
+}
+
+function callClaude(dataURL, mimeType) {
+  setStatus('loading', 'Asking Claude Vision…');
+  var base64 = dataURL.split(',')[1];
+  if (!base64) { showToast('Image error — try again.'); return; }
+
+  var prompt = [
+    'You are a world-class ichthyologist (fish scientist). Carefully examine this image and identify the fish species shown.',
+    '',
+    'Respond ONLY with a raw JSON object — no markdown, no code fences, no explanation before or after. Use this exact schema:',
+    '',
+    '{',
+    '  "name": "Common name",',
+    '  "scientific": "Genus species",',
+    '  "family": "Family name",',
+    '  "habitat": "Natural habitat",',
+    '  "origin": "Geographic origin / range",',
+    '  "size": "Typical adult size",',
+    '  "lifespan": "Typical lifespan",',
+    '  "diet": "Diet description",',
+    '  "conservationStatus": "IUCN Red List status",',
+    '  "waterTemp": "Preferred water temperature",',
+    '  "description": "2-3 engaging sentences about this fish",',
+    '  "funFact": "One surprising and delightful fun fact",',
+    '  "emoji": "Most fitting single emoji",',
+    '  "color": "Hex color inspired by the fish (e.g. #e76f51)",',
+    '  "confidence": "high or medium or low",',
+    '  "notAFish": false',
+    '}',
+    '',
+    'If no fish is visible, set notAFish to true, name to "No Fish Detected", and describe what you see in description.',
+    'Always output valid JSON only.'
+  ].join('\n');
+
+  fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-calls': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1024,
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'image', source: { type: 'base64', media_type: mimeType, data: base64 } },
+          { type: 'text', text: prompt }
+        ]
+      }]
+    })
+  })
+  .then(function(res) {
+    if (!res.ok) {
+      return res.json().then(function(e) {
+        throw new Error((e.error && e.error.message) || ('HTTP ' + res.status));
+      }).catch(function() { throw new Error('HTTP ' + res.status); });
+    }
+    return res.json();
+  })
+  .then(function(data) {
+    scanLn.classList.remove('go');
+    var raw = (data.content && data.content[0] && data.content[0].text) || '';
+    // Strip any accidental markdown fences
+    raw = raw.replace(/^```[a-z]*\n?/i,'').replace(/```\s*$/,'').trim();
+    var fish;
+    try {
+      fish = JSON.parse(raw);
+    } catch(e) {
+      var m = raw.match(/\{[\s\S]*\}/);
+      if (m) { try { fish = JSON.parse(m[0]); } catch(e2) { throw new Error('JSON parse failed'); } }
+      else { throw new Error('No JSON in response'); }
+    }
+    setStatus('ready', 'Identified ✓');
+    showResult(fish);
+  })
+  .catch(function(err) {
+    scanLn.classList.remove('go');
+    setStatus('error', 'Error');
+    var m = (err.message || '').toLowerCase();
+    if (m.indexOf('401') !== -1 || m.indexOf('authentication') !== -1) {
+      showToast('Invalid API key — check console.anthropic.com');
+    } else if (m.indexOf('429') !== -1) {
+      showToast('Rate limit reached. Wait a moment and retry.');
+    } else if (m.indexOf('fetch') !== -1 || m.indexOf('network') !== -1) {
+      showToast('Network error. Check your internet connection.');
+    } else {
+      showToast('Error: ' + (err.message || 'unknown').slice(0, 55));
+    }
+    document.getElementById('scanning-state').classList.remove('show');
+    document.getElementById('result-empty').style.display = 'block';
+    setStatus('ready', 'Ready — try again');
+  });
+}
+
 function showScanning() {
   document.getElementById('result-empty').style.display = 'none';
   document.getElementById('scanning-state').classList.add('show');
@@ -672,62 +694,69 @@ function showResult(fish) {
   document.getElementById('scanning-state').classList.remove('show');
   document.getElementById('result-card').classList.add('show');
 
-  document.getElementById('r-badge').textContent = fish.emoji;
-  document.getElementById('r-badge').style.background = fish.color + '22';
-  document.getElementById('r-name').textContent = fish.name;
-  document.getElementById('r-sci').textContent = fish.scientific;
+  var emoji = fish.emoji || '🐟';
+  var color = /^#[0-9a-fA-F]{6}$/.test(fish.color||'') ? fish.color : '#00f5c4';
 
-  if (fish.confidence != null) {
-    var pct = Math.round(fish.confidence * 100);
-    document.getElementById('r-conf').textContent = '● ' + pct + '% confidence';
-  } else {
-    document.getElementById('r-conf').textContent = '';
+  document.getElementById('r-badge').textContent = emoji;
+  document.getElementById('r-badge').style.background = color + '22';
+  document.getElementById('r-name').textContent = fish.name || 'Unknown Fish';
+  document.getElementById('r-sci').textContent  = fish.scientific || '';
+
+  var confLabels = { high:'● High confidence', medium:'● Medium confidence', low:'● Low confidence' };
+  document.getElementById('r-conf').textContent = confLabels[fish.confidence] || '';
+
+  var csColors = {
+    'Least Concern':'#52b788','Near Threatened':'#80b918',
+    'Vulnerable':'#f4a261','Endangered':'#e63946',
+    'Critically Endangered':'#c1121f','Extinct in the Wild':'#9d4edd',
+    'Data Deficient':'#adb5bd','Not Evaluated':'#adb5bd','Unknown':'#888'
+  };
+  var csc = csColors[fish.conservationStatus] || '#888';
+  var cb = document.getElementById('r-conservation');
+  cb.textContent = '⬡ ' + (fish.conservationStatus || 'Unknown');
+  cb.style.color = csc; cb.style.borderColor = csc+'44'; cb.style.background = csc+'18';
+
+  document.getElementById('r-family').textContent   = fish.family    || '–';
+  document.getElementById('r-habitat').textContent  = fish.habitat   || '–';
+  document.getElementById('r-size').textContent     = fish.size      || '–';
+  document.getElementById('r-lifespan').textContent = fish.lifespan  || '–';
+  document.getElementById('r-origin').textContent   = fish.origin    || '–';
+  document.getElementById('r-temp').textContent     = fish.waterTemp || '–';
+  document.getElementById('r-desc').textContent     = fish.description || '';
+  document.getElementById('r-fact').textContent     = fish.funFact   || '';
+
+  var ex = document.getElementById('r-extra');
+  ex.innerHTML = '';
+  if (fish.diet) {
+    var c = document.createElement('div');
+    c.className = 'extra-chip';
+    c.textContent = '🍽 ' + fish.diet;
+    ex.appendChild(c);
   }
-
-  var csColors = { 'Least Concern':'#52b788','Vulnerable':'#f4a261','Endangered':'#e63946','Unknown':'#888' };
-  var csColor = csColors[fish.status] || '#888';
-  var badge = document.getElementById('r-conservation');
-  badge.textContent = '⬡ ' + fish.status;
-  badge.style.color = csColor;
-  badge.style.borderColor = csColor + '44';
-  badge.style.background = csColor + '18';
-
-  document.getElementById('r-family').textContent  = fish.family;
-  document.getElementById('r-habitat').textContent = fish.habitat;
-  document.getElementById('r-size').textContent    = fish.size;
-  document.getElementById('r-lifespan').textContent = fish.lifespan;
-  document.getElementById('r-origin').textContent  = fish.origin;
-  document.getElementById('r-temp').textContent    = fish.temp;
-  document.getElementById('r-desc').textContent    = fish.desc;
-  document.getElementById('r-fact').textContent    = fish.fact;
 }
 
-// ─── Share ───────────────────────────────────────────────────────────────────
+// Share
 function shareTwitter() {
   if (!currentFish) return;
-  var text = '🐟 I just identified a ' + currentFish.name + ' (' + currentFish.scientific + ') using AquaScan!\n\n💡 ' + currentFish.fact + '\n\nTry AquaScan: ' + window.location.href;
-  window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(text), '_blank');
+  var t = '🐟 I just identified a ' + currentFish.name + ' (' + (currentFish.scientific||'') + ') using AquaScan!\n\n💡 ' + (currentFish.funFact||'') + '\n\n' + window.location.href;
+  window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(t), '_blank');
 }
-
 function shareFacebook() {
   window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(window.location.href), '_blank');
 }
-
 function copyInfo() {
   if (!currentFish) return;
-  var text = '🐟 AquaScan Fish Identification\n\nSpecies: ' + currentFish.name + '\nScientific: ' + currentFish.scientific + '\nFamily: ' + currentFish.family + '\nHabitat: ' + currentFish.habitat + '\nSize: ' + currentFish.size + '\nLifespan: ' + currentFish.lifespan + '\nConservation: ' + currentFish.status + '\n\n' + currentFish.desc + '\n\n💡 ' + currentFish.fact;
+  var f = currentFish;
+  var t = '🐟 AquaScan Fish ID\n\nSpecies: '+f.name+'\nScientific: '+(f.scientific||'')+'\nFamily: '+(f.family||'')+'\nHabitat: '+(f.habitat||'')+'\nSize: '+(f.size||'')+'\nLifespan: '+(f.lifespan||'')+'\nConservation: '+(f.conservationStatus||'')+'\n\n'+(f.description||'')+'\n\n💡 '+(f.funFact||'');
   if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(text).then(function() { showToast('Fish info copied!'); }).catch(function() { fallbackCopy(text); });
-  } else {
-    fallbackCopy(text);
-  }
+    navigator.clipboard.writeText(t).then(function(){ showToast('Copied!'); }).catch(function(){ fbCopy(t); });
+  } else { fbCopy(t); }
 }
-
-function fallbackCopy(text) {
+function fbCopy(t) {
   var ta = document.createElement('textarea');
-  ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  ta.value = t; ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
   document.body.appendChild(ta); ta.focus(); ta.select();
-  try { document.execCommand('copy'); showToast('Fish info copied!'); } catch(e) { showToast('Copy failed'); }
+  try { document.execCommand('copy'); showToast('Copied!'); } catch(e) { showToast('Copy failed'); }
   document.body.removeChild(ta);
 }
 
@@ -737,101 +766,70 @@ function downloadCard() {
   var canvas = document.getElementById('share-canvas');
   var ctx = canvas.getContext('2d');
   canvas.width = 800; canvas.height = 460;
+  ctx.fillStyle = '#020d18'; ctx.fillRect(0,0,800,460);
+  var g = ctx.createLinearGradient(0,0,800,460);
+  g.addColorStop(0,'rgba(0,100,180,0.18)'); g.addColorStop(1,'rgba(0,50,120,0.08)');
+  ctx.fillStyle = g; ctx.fillRect(0,0,800,460);
+  ctx.fillStyle = '#00f5c4'; ctx.fillRect(0,0,4,460);
 
-  // BG
-  ctx.fillStyle = '#020d18'; ctx.fillRect(0, 0, 800, 460);
-  var g = ctx.createLinearGradient(0, 0, 800, 460);
-  g.addColorStop(0, 'rgba(0,100,180,0.18)'); g.addColorStop(1, 'rgba(0,50,120,0.08)');
-  ctx.fillStyle = g; ctx.fillRect(0, 0, 800, 460);
-
-  // Accent
-  ctx.fillStyle = '#00f5c4'; ctx.fillRect(0, 0, 4, 460);
-
-  function drawCard() {
-    // Logo
-    ctx.fillStyle = '#00f5c4'; ctx.font = 'bold 13px monospace';
-    ctx.fillText('🐟 AQUASCAN — AI Fish Identifier', 24, 38);
-
-    // Name
-    ctx.fillStyle = '#e8f4f8'; ctx.font = 'bold 34px Georgia, serif';
-    ctx.fillText(fish.emoji + '  ' + fish.name, 24, 95);
-
-    // Scientific
-    ctx.fillStyle = 'rgba(232,244,248,0.5)'; ctx.font = 'italic 15px Georgia, serif';
-    ctx.fillText(fish.scientific, 24, 122);
-
-    // Chips
-    var chips = [['Family', fish.family], ['Habitat', fish.habitat], ['Size', fish.size], ['Origin', fish.origin]];
-    chips.forEach(function(c, i) {
-      var cx = 24 + (i % 2) * 210, cy = 148 + Math.floor(i / 2) * 58;
-      ctx.fillStyle = 'rgba(255,255,255,0.05)';
-      ctx.beginPath(); ctx.roundRect(cx, cy, 195, 46, 6); ctx.fill();
-      ctx.fillStyle = 'rgba(232,244,248,0.38)'; ctx.font = '9px monospace';
-      ctx.fillText(c[0].toUpperCase(), cx + 10, cy + 15);
-      ctx.fillStyle = '#e8f4f8'; ctx.font = '12px monospace';
-      ctx.fillText(c[1], cx + 10, cy + 33);
+  function draw() {
+    ctx.fillStyle='#00f5c4'; ctx.font='bold 12px monospace';
+    ctx.fillText('🐟 AQUASCAN — Claude Vision AI',22,36);
+    ctx.fillStyle='#e8f4f8'; ctx.font='bold 30px Georgia,serif';
+    ctx.fillText((fish.emoji||'🐟')+'  '+fish.name,22,86);
+    ctx.fillStyle='rgba(232,244,248,0.42)'; ctx.font='italic 14px Georgia,serif';
+    ctx.fillText(fish.scientific||'',22,110);
+    [['Family',fish.family],['Habitat',fish.habitat],['Size',fish.size],['Origin',fish.origin]].forEach(function(c,i){
+      var cx=22+(i%2)*208, cy=132+Math.floor(i/2)*56;
+      ctx.fillStyle='rgba(255,255,255,0.05)';
+      ctx.beginPath(); ctx.roundRect(cx,cy,195,44,6); ctx.fill();
+      ctx.fillStyle='rgba(232,244,248,0.32)'; ctx.font='9px monospace';
+      ctx.fillText(c[0].toUpperCase(),cx+9,cy+14);
+      ctx.fillStyle='#e8f4f8'; ctx.font='12px monospace';
+      ctx.fillText(c[1]||'',cx+9,cy+31);
     });
-
-    // Fun fact
-    ctx.fillStyle = 'rgba(0,245,196,0.07)';
-    ctx.beginPath(); ctx.roundRect(24, 285, 440, 105, 8); ctx.fill();
-    ctx.fillStyle = 'rgba(0,245,196,0.7)'; ctx.fillRect(24, 285, 3, 105);
-    ctx.fillStyle = '#00f5c4'; ctx.font = '10px monospace';
-    ctx.fillText('💡  FUN FACT', 36, 305);
-    ctx.fillStyle = 'rgba(232,244,248,0.72)'; ctx.font = '12px monospace';
-    wrapText(ctx, fish.fact, 36, 325, 415, 17);
-
-    // Footer
-    ctx.fillStyle = 'rgba(232,244,248,0.25)'; ctx.font = '10px monospace';
-    ctx.fillText('Generated by AquaScan · AI-powered fish identification · ' + new Date().toLocaleDateString(), 24, 445);
-
-    var link = document.createElement('a');
-    link.download = 'aquascan-' + fish.name.toLowerCase().replace(/\s+/g, '-') + '.png';
-    link.href = canvas.toDataURL('image/png');
-    link.click();
-    showToast('Fish card downloaded!');
+    ctx.fillStyle='rgba(0,245,196,0.06)';
+    ctx.beginPath(); ctx.roundRect(22,262,435,110,8); ctx.fill();
+    ctx.fillStyle='rgba(0,245,196,0.7)'; ctx.fillRect(22,262,3,110);
+    ctx.fillStyle='#00f5c4'; ctx.font='10px monospace'; ctx.fillText('💡  FUN FACT',34,282);
+    ctx.fillStyle='rgba(232,244,248,0.7)'; ctx.font='12px monospace';
+    wrapText(ctx,fish.funFact||'',34,300,410,17);
+    ctx.fillStyle='rgba(232,244,248,0.2)'; ctx.font='10px monospace';
+    ctx.fillText('AquaScan · Claude Vision AI · '+new Date().toLocaleDateString(),22,446);
+    var a=document.createElement('a');
+    a.download='aquascan-'+(fish.name||'fish').toLowerCase().replace(/\s+/g,'-')+'.png';
+    a.href=canvas.toDataURL('image/png'); a.click();
+    showToast('Card downloaded!');
   }
 
-  // Draw captured photo if available
   if (capturedDataURL) {
-    var img = new Image();
-    img.onload = function() {
+    var img=new Image(); img.onload=function(){
       ctx.save();
-      var px = 490, py = 60, pw = 285, ph = 285;
-      ctx.beginPath(); ctx.roundRect(px, py, pw, ph, 10); ctx.clip();
-      var ar = img.width / img.height;
-      var dw = pw, dh = pw / ar;
-      if (dh < ph) { dh = ph; dw = ph * ar; }
-      ctx.drawImage(img, px + (pw - dw) / 2, py + (ph - dh) / 2, dw, dh);
-      ctx.restore();
-      drawCard();
-    };
-    img.src = capturedDataURL;
-  } else {
-    drawCard();
-  }
+      var px=468,py=48,pw=308,ph=308;
+      ctx.beginPath(); ctx.roundRect(px,py,pw,ph,10); ctx.clip();
+      var ar=img.width/img.height,dw=pw,dh=pw/ar;
+      if(dh<ph){dh=ph;dw=ph*ar;}
+      ctx.drawImage(img,px+(pw-dw)/2,py+(ph-dh)/2,dw,dh);
+      ctx.restore(); draw();
+    }; img.src=capturedDataURL;
+  } else { draw(); }
 }
 
-function wrapText(ctx, text, x, y, maxW, lineH) {
-  var words = text.split(' '), line = '';
-  for (var n = 0; n < words.length; n++) {
-    var test = line + words[n] + ' ';
-    if (ctx.measureText(test).width > maxW && line !== '') {
-      ctx.fillText(line, x, y); y += lineH; line = words[n] + ' ';
-    } else { line = test; }
+function wrapText(ctx,text,x,y,maxW,lh){
+  var words=(text||'').split(' '),line='';
+  for(var n=0;n<words.length;n++){
+    var t=line+words[n]+' ';
+    if(ctx.measureText(t).width>maxW&&line){ctx.fillText(line,x,y);y+=lh;line=words[n]+' ';}
+    else{line=t;}
   }
-  ctx.fillText(line, x, y);
+  ctx.fillText(line,x,y);
 }
 
-// ─── Toast ───────────────────────────────────────────────────────────────────
 function showToast(msg) {
-  var t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(function() { t.classList.remove('show'); }, 3000);
+  var t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(function(){t.classList.remove('show');},3200);
 }
-
-// ─── Init ────────────────────────────────────────────────────────────────────
-window.addEventListener('load', function() { loadModel(); });
 </script>
 </body>
 </html>
