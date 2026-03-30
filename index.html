@@ -7,6 +7,11 @@
   <meta name="description" content="Scan any fish with your camera and instantly discover its species, habitat, and fascinating facts." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+
+  <!-- TensorFlow.js loaded as classic scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.1/dist/mobilenet.min.js"></script>
+
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -15,7 +20,6 @@
       --ocean-mid: #061a2e;
       --ocean-surface: #0a2740;
       --biolum: #00f5c4;
-      --biolum-dim: #00c49a;
       --coral: #ff6b6b;
       --sand: #f4d58d;
       --foam: #e8f4f8;
@@ -25,8 +29,6 @@
       --text-secondary: rgba(232, 244, 248, 0.6);
     }
 
-    html { scroll-behavior: smooth; }
-
     body {
       font-family: 'DM Mono', monospace;
       background: var(--ocean-deep);
@@ -35,976 +37,798 @@
       overflow-x: hidden;
     }
 
-    /* Animated ocean background */
     body::before {
       content: '';
       position: fixed; inset: 0;
-      background: 
+      background:
         radial-gradient(ellipse at 20% 50%, rgba(0, 100, 180, 0.15) 0%, transparent 60%),
         radial-gradient(ellipse at 80% 20%, rgba(0, 245, 196, 0.06) 0%, transparent 50%),
         radial-gradient(ellipse at 60% 80%, rgba(0, 50, 120, 0.2) 0%, transparent 60%);
       pointer-events: none; z-index: 0;
     }
 
-    /* Floating particles */
-    .particles {
-      position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden;
-    }
+    .particles { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
     .particle {
-      position: absolute;
-      width: 2px; height: 2px;
-      border-radius: 50%;
-      background: var(--biolum);
-      opacity: 0;
+      position: absolute; border-radius: 50%;
+      background: var(--biolum); opacity: 0;
       animation: float-up linear infinite;
     }
-
     @keyframes float-up {
-      0% { transform: translateY(100vh) translateX(0); opacity: 0; }
-      10% { opacity: 0.6; }
-      90% { opacity: 0.3; }
-      100% { transform: translateY(-10vh) translateX(30px); opacity: 0; }
+      0% { transform: translateY(100vh); opacity: 0; }
+      10% { opacity: 0.5; }
+      90% { opacity: 0.2; }
+      100% { transform: translateY(-10vh); opacity: 0; }
     }
 
-    /* ── Header ── */
     header {
       position: relative; z-index: 10;
       display: flex; align-items: center; justify-content: space-between;
-      padding: 1.5rem 2rem;
+      padding: 1.25rem 2rem;
       border-bottom: 1px solid var(--glass-border);
       backdrop-filter: blur(12px);
-      background: rgba(2, 13, 24, 0.7);
+      background: rgba(2, 13, 24, 0.8);
     }
-
-    .logo {
-      display: flex; align-items: center; gap: 0.75rem;
-    }
+    .logo { display: flex; align-items: center; gap: 0.75rem; }
     .logo-icon {
       width: 40px; height: 40px;
       background: linear-gradient(135deg, var(--biolum), #00a3e0);
-      border-radius: 10px;
-      display: grid; place-items: center;
-      font-size: 1.4rem;
-      box-shadow: 0 0 20px rgba(0, 245, 196, 0.4);
+      border-radius: 10px; display: grid; place-items: center;
+      font-size: 1.3rem;
+      box-shadow: 0 0 20px rgba(0, 245, 196, 0.35);
     }
     .logo-text {
-      font-family: 'Syne', sans-serif;
-      font-size: 1.5rem; font-weight: 800;
-      letter-spacing: -0.02em;
+      font-family: 'Syne', sans-serif; font-size: 1.4rem; font-weight: 800;
       background: linear-gradient(90deg, var(--biolum), #a8edff);
       -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     }
-    .logo-sub {
-      font-size: 0.65rem; color: var(--text-secondary);
-      letter-spacing: 0.15em; text-transform: uppercase;
-    }
-
+    .logo-sub { font-size: 0.6rem; color: var(--text-secondary); letter-spacing: 0.15em; text-transform: uppercase; }
     .header-badge {
-      font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase;
+      font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase;
       color: var(--biolum); border: 1px solid var(--glass-border);
-      padding: 0.4rem 0.9rem; border-radius: 20px;
-      background: var(--glass);
+      padding: 0.35rem 0.8rem; border-radius: 20px; background: var(--glass);
     }
 
-    /* ── Main layout ── */
     main {
       position: relative; z-index: 1;
       max-width: 1100px; margin: 0 auto;
-      padding: 2.5rem 1.5rem 4rem;
+      padding: 2rem 1.5rem 4rem;
     }
 
-    /* ── Hero ── */
-    .hero {
-      text-align: center;
-      padding: 2rem 0 3rem;
-    }
+    .hero { text-align: center; padding: 1.5rem 0 2.5rem; }
     .hero h1 {
       font-family: 'Syne', sans-serif;
-      font-size: clamp(2.2rem, 6vw, 4rem);
-      font-weight: 800;
-      line-height: 1.1;
-      letter-spacing: -0.03em;
-      margin-bottom: 1rem;
+      font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 800;
+      line-height: 1.1; letter-spacing: -0.03em; margin-bottom: 0.75rem;
     }
     .hero h1 span { color: var(--biolum); }
-    .hero p {
-      color: var(--text-secondary);
-      font-size: 0.95rem;
-      max-width: 480px; margin: 0 auto;
-      line-height: 1.7;
-    }
+    .hero p { color: var(--text-secondary); font-size: 0.9rem; max-width: 440px; margin: 0 auto; line-height: 1.7; }
 
-    /* ── Scanner section ── */
-    .scanner-wrapper {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.5rem;
-      margin-bottom: 2rem;
+    .app-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;
     }
-    @media (max-width: 700px) {
-      .scanner-wrapper { grid-template-columns: 1fr; }
-    }
+    @media (max-width: 720px) { .app-grid { grid-template-columns: 1fr; } }
 
     .panel {
-      background: var(--glass);
-      border: 1px solid var(--glass-border);
-      border-radius: 16px;
-      overflow: hidden;
-      backdrop-filter: blur(8px);
+      background: var(--glass); border: 1px solid var(--glass-border);
+      border-radius: 16px; overflow: hidden; backdrop-filter: blur(8px);
     }
-
     .panel-header {
-      padding: 1rem 1.25rem;
-      border-bottom: 1px solid var(--glass-border);
+      padding: 0.85rem 1.25rem; border-bottom: 1px solid var(--glass-border);
       display: flex; align-items: center; gap: 0.6rem;
     }
-    .panel-header .dot {
-      width: 8px; height: 8px; border-radius: 50%;
-    }
-    .panel-header span {
-      font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-secondary);
-    }
+    .panel-dot { width: 7px; height: 7px; border-radius: 50%; }
+    .panel-label { font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-secondary); }
 
-    /* Camera panel */
-    .camera-container {
-      position: relative;
-      aspect-ratio: 4/3;
-      background: #000;
-      overflow: hidden;
+    /* Camera */
+    .camera-wrap {
+      position: relative; background: #000;
+      aspect-ratio: 4/3; overflow: hidden;
     }
-
-    #video, #preview-canvas {
-      width: 100%; height: 100%;
-      object-fit: cover;
-      display: block;
+    #video {
+      width: 100%; height: 100%; object-fit: cover;
+      display: none;
     }
-    #preview-canvas { position: absolute; inset: 0; display: none; }
-
-    .scan-overlay {
-      position: absolute; inset: 0;
-      pointer-events: none;
+    #snap-canvas {
+      width: 100%; height: 100%; object-fit: cover;
+      display: none; position: absolute; inset: 0;
     }
-    .scan-corner {
-      position: absolute;
-      width: 32px; height: 32px;
-      border-color: var(--biolum);
-      border-style: solid;
-      opacity: 0.8;
-    }
-    .scan-corner.tl { top: 16px; left: 16px; border-width: 2px 0 0 2px; }
-    .scan-corner.tr { top: 16px; right: 16px; border-width: 2px 2px 0 0; }
-    .scan-corner.bl { bottom: 16px; left: 16px; border-width: 0 0 2px 2px; }
-    .scan-corner.br { bottom: 16px; right: 16px; border-width: 0 2px 2px 0; }
-
-    .scan-line {
-      position: absolute; left: 16px; right: 16px; height: 1px;
-      background: linear-gradient(90deg, transparent, var(--biolum), transparent);
-      animation: scan 2.5s ease-in-out infinite;
-      opacity: 0;
-    }
-    .scan-line.active { opacity: 1; }
-    @keyframes scan {
-      0% { top: 16px; }
-      100% { top: calc(100% - 16px); }
-    }
-
-    .camera-placeholder {
+    .cam-placeholder {
       position: absolute; inset: 0;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
-      gap: 0.75rem; color: var(--text-secondary);
-      font-size: 0.8rem;
+      gap: 0.5rem; color: var(--text-secondary); font-size: 0.75rem;
     }
-    .camera-placeholder .fish-icon { font-size: 3rem; opacity: 0.3; }
+    .cam-placeholder-icon { font-size: 2.5rem; opacity: 0.25; }
+
+    /* Scan overlay */
+    .scan-overlay { position: absolute; inset: 0; pointer-events: none; }
+    .scan-corner {
+      position: absolute; width: 28px; height: 28px;
+      border-color: var(--biolum); border-style: solid; opacity: 0.7;
+    }
+    .tl { top:14px; left:14px; border-width: 2px 0 0 2px; }
+    .tr { top:14px; right:14px; border-width: 2px 2px 0 0; }
+    .bl { bottom:14px; left:14px; border-width: 0 0 2px 2px; }
+    .br { bottom:14px; right:14px; border-width: 0 2px 2px 0; }
+    .scan-line {
+      position: absolute; left: 14px; right: 14px; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--biolum), transparent);
+      top: 14px; opacity: 0;
+    }
+    .scan-line.active { opacity: 1; animation: scanMove 2s ease-in-out infinite; }
+    @keyframes scanMove { 0% { top: 14px; } 100% { top: calc(100% - 14px); } }
 
     /* Controls */
-    .controls {
-      padding: 1rem 1.25rem;
-      display: flex; flex-direction: column; gap: 0.7rem;
-    }
-
-    .btn {
-      display: flex; align-items: center; justify-content: center; gap: 0.5rem;
-      padding: 0.75rem 1.25rem;
-      border-radius: 10px;
-      font-family: 'DM Mono', monospace;
-      font-size: 0.78rem; font-weight: 500;
-      letter-spacing: 0.06em;
-      cursor: pointer;
-      transition: all 0.2s;
-      border: none;
-      text-transform: uppercase;
-    }
-    .btn-primary {
-      background: var(--biolum);
-      color: var(--ocean-deep);
-    }
-    .btn-primary:hover { background: #00e6b8; transform: translateY(-1px); box-shadow: 0 4px 20px rgba(0, 245, 196, 0.3); }
-    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
-
-    .btn-secondary {
-      background: var(--glass);
-      color: var(--text-primary);
-      border: 1px solid var(--glass-border);
-    }
-    .btn-secondary:hover { background: rgba(0, 245, 196, 0.12); border-color: var(--biolum); }
-
-    .btn-coral {
-      background: transparent;
-      color: var(--coral);
-      border: 1px solid rgba(255, 107, 107, 0.3);
-    }
-    .btn-coral:hover { background: rgba(255, 107, 107, 0.1); }
-
-    .upload-area {
-      border: 1.5px dashed var(--glass-border);
-      border-radius: 10px;
-      padding: 1.2rem;
-      text-align: center;
-      font-size: 0.75rem;
-      color: var(--text-secondary);
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .upload-area:hover { border-color: var(--biolum); color: var(--biolum); background: var(--glass); }
-    .upload-area input { display: none; }
+    .controls { padding: 1rem 1.1rem; display: flex; flex-direction: column; gap: 0.6rem; }
 
     .model-status {
-      font-size: 0.68rem; color: var(--text-secondary);
-      text-align: center; display: flex; align-items: center; justify-content: center; gap: 0.4rem;
+      display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+      font-size: 0.68rem; color: var(--text-secondary); padding: 0.4rem;
     }
-    .status-dot {
-      width: 6px; height: 6px; border-radius: 50%;
-      background: #555; transition: background 0.3s;
-    }
-    .status-dot.loading { background: var(--sand); animation: pulse 1s infinite; }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: #444; transition: background 0.3s; }
+    .status-dot.loading { background: var(--sand); animation: blink 1s infinite; }
     .status-dot.ready { background: var(--biolum); }
     .status-dot.error { background: var(--coral); }
-    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
 
-    /* Results panel */
-    .result-panel {
-      background: var(--glass);
-      border: 1px solid var(--glass-border);
-      border-radius: 16px;
-      overflow: hidden;
-      backdrop-filter: blur(8px);
+    .btn {
+      display: flex; align-items: center; justify-content: center; gap: 0.45rem;
+      padding: 0.7rem 1rem; border-radius: 10px;
+      font-family: 'DM Mono', monospace; font-size: 0.75rem; font-weight: 500;
+      letter-spacing: 0.05em; text-transform: uppercase;
+      cursor: pointer; border: none; transition: all 0.18s;
     }
+    .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+    .btn-primary { background: var(--biolum); color: var(--ocean-deep); }
+    .btn-primary:not(:disabled):hover { background: #00e6b8; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,245,196,0.3); }
+    .btn-secondary { background: var(--glass); color: var(--text-primary); border: 1px solid var(--glass-border); }
+    .btn-secondary:not(:disabled):hover { background: rgba(0,245,196,0.12); border-color: var(--biolum); }
 
+    .upload-label {
+      display: flex; align-items: center; justify-content: center; gap: 0.45rem;
+      padding: 0.7rem 1rem; border-radius: 10px;
+      border: 1.5px dashed var(--glass-border);
+      font-family: 'DM Mono', monospace; font-size: 0.75rem;
+      color: var(--text-secondary); cursor: pointer; transition: all 0.18s;
+      text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .upload-label:hover { border-color: var(--biolum); color: var(--biolum); background: var(--glass); }
+
+    /* Result panel */
     .result-empty {
-      padding: 3rem 2rem;
-      text-align: center;
-      color: var(--text-secondary);
-      font-size: 0.8rem;
-      line-height: 1.8;
+      padding: 3rem 1.5rem; text-align: center;
+      color: var(--text-secondary); font-size: 0.78rem; line-height: 1.9;
     }
-    .result-empty .big-icon { font-size: 3.5rem; margin-bottom: 1rem; opacity: 0.3; }
+    .result-empty-icon { font-size: 3rem; margin-bottom: 0.75rem; opacity: 0.2; display: block; }
+    .result-empty strong { font-family: 'Syne', sans-serif; color: var(--text-primary); display: block; margin-bottom: 0.4rem; }
 
-    .result-content { display: none; }
-    .result-content.visible { display: block; }
+    .scanning-state {
+      display: none; flex-direction: column; align-items: center;
+      gap: 1rem; padding: 3rem 1.5rem; text-align: center;
+    }
+    .scanning-state.show { display: flex; }
+    .sonar { position: relative; width: 72px; height: 72px; }
+    .sonar-ring {
+      position: absolute; inset: 0; border-radius: 50%;
+      border: 2px solid var(--biolum);
+      animation: sonarPulse 1.6s ease-out infinite;
+    }
+    .sonar-ring:nth-child(2) { animation-delay: 0.53s; }
+    .sonar-ring:nth-child(3) { animation-delay: 1.06s; }
+    @keyframes sonarPulse { 0%{transform:scale(0.2);opacity:1} 100%{transform:scale(1.3);opacity:0} }
+    .sonar-inner { position: absolute; inset: 0; display: grid; place-items: center; font-size: 1.7rem; }
+    .scanning-label { font-size: 0.78rem; color: var(--text-secondary); }
+    .scanning-label em { color: var(--biolum); font-style: normal; }
 
-    .result-hero {
-      padding: 1.5rem 1.5rem 1rem;
-      display: flex; align-items: flex-start; gap: 1rem;
+    .result-card { display: none; }
+    .result-card.show { display: block; }
+
+    .result-top {
+      padding: 1.25rem 1.25rem 1rem;
+      display: flex; gap: 0.9rem; align-items: flex-start;
       border-bottom: 1px solid var(--glass-border);
     }
-    .fish-emoji-badge {
-      width: 56px; height: 56px;
-      border-radius: 14px;
-      display: grid; place-items: center;
-      font-size: 2rem;
-      flex-shrink: 0;
+    .fish-badge {
+      width: 52px; height: 52px; border-radius: 12px;
+      display: grid; place-items: center; font-size: 1.8rem; flex-shrink: 0;
     }
-    .result-name {
-      font-family: 'Syne', sans-serif;
-      font-size: 1.5rem; font-weight: 700;
-      letter-spacing: -0.02em;
-      line-height: 1.2;
-    }
-    .result-scientific {
-      font-size: 0.75rem; font-style: italic;
-      color: var(--text-secondary); margin-top: 0.2rem;
-    }
-    .result-confidence {
-      margin-top: 0.5rem;
-      display: inline-flex; align-items: center; gap: 0.4rem;
-      font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.1em;
-      color: var(--biolum);
+    .fish-name { font-family: 'Syne', sans-serif; font-size: 1.35rem; font-weight: 700; line-height: 1.2; }
+    .fish-sci { font-size: 0.72rem; font-style: italic; color: var(--text-secondary); margin-top: 0.15rem; }
+    .fish-conf { font-size: 0.65rem; color: var(--biolum); text-transform: uppercase; letter-spacing: 0.1em; margin-top: 0.4rem; }
+
+    .result-body { padding: 1rem 1.25rem; }
+
+    .conservation {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      font-size: 0.68rem; padding: 0.3rem 0.7rem; border-radius: 20px;
+      margin-bottom: 1rem; border: 1px solid;
     }
 
-    .result-body { padding: 1rem 1.5rem; }
-
-    .info-grid {
-      display: grid; grid-template-columns: 1fr 1fr;
-      gap: 0.6rem; margin-bottom: 1.2rem;
-    }
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.55rem; margin-bottom: 1rem; }
     .info-chip {
-      background: rgba(0, 0, 0, 0.2);
-      border: 1px solid var(--glass-border);
-      border-radius: 8px;
-      padding: 0.6rem 0.75rem;
+      background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border);
+      border-radius: 8px; padding: 0.55rem 0.7rem;
     }
-    .info-chip-label {
-      font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.12em;
-      color: var(--text-secondary); margin-bottom: 0.2rem;
-    }
-    .info-chip-value {
-      font-size: 0.8rem; color: var(--text-primary);
-    }
+    .chip-label { font-size: 0.58rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-secondary); margin-bottom: 0.15rem; }
+    .chip-val { font-size: 0.76rem; }
 
-    .description-text {
-      font-size: 0.82rem; line-height: 1.75;
-      color: var(--text-secondary);
-      margin-bottom: 1.2rem;
-    }
+    .fish-desc { font-size: 0.79rem; line-height: 1.75; color: var(--text-secondary); margin-bottom: 1rem; }
 
     .fun-fact {
-      background: rgba(0, 245, 196, 0.06);
-      border: 1px solid rgba(0, 245, 196, 0.15);
-      border-left: 3px solid var(--biolum);
-      border-radius: 0 10px 10px 0;
-      padding: 0.85rem 1rem;
-      margin-bottom: 1.2rem;
+      background: rgba(0,245,196,0.05); border: 1px solid rgba(0,245,196,0.12);
+      border-left: 3px solid var(--biolum); border-radius: 0 8px 8px 0;
+      padding: 0.75rem 0.9rem; margin-bottom: 1rem;
     }
-    .fun-fact-label {
-      font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.12em;
-      color: var(--biolum); margin-bottom: 0.3rem;
-    }
-    .fun-fact-text { font-size: 0.8rem; line-height: 1.6; }
+    .fun-fact-label { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--biolum); margin-bottom: 0.25rem; }
+    .fun-fact-text { font-size: 0.77rem; line-height: 1.65; }
 
-    .conservation-badge {
-      display: inline-flex; align-items: center; gap: 0.4rem;
-      font-size: 0.72rem; padding: 0.35rem 0.75rem;
-      border-radius: 20px; margin-bottom: 1.2rem;
-    }
-
-    /* Share section */
-    .share-section {
-      padding: 1rem 1.5rem;
-      border-top: 1px solid var(--glass-border);
-    }
-    .share-label {
-      font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.12em;
-      color: var(--text-secondary); margin-bottom: 0.7rem;
-    }
-    .share-buttons {
-      display: flex; gap: 0.6rem; flex-wrap: wrap;
-    }
+    .share-section { padding: 0.9rem 1.25rem; border-top: 1px solid var(--glass-border); }
+    .share-label { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-secondary); margin-bottom: 0.6rem; }
+    .share-row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
     .share-btn {
-      display: flex; align-items: center; gap: 0.4rem;
-      padding: 0.55rem 0.9rem;
-      border-radius: 8px;
-      font-family: 'DM Mono', monospace;
-      font-size: 0.7rem; font-weight: 500;
-      cursor: pointer;
-      border: 1px solid;
-      transition: all 0.2s;
-      letter-spacing: 0.05em;
+      display: flex; align-items: center; gap: 0.35rem;
+      padding: 0.5rem 0.8rem; border-radius: 8px;
+      font-family: 'DM Mono', monospace; font-size: 0.67rem;
+      cursor: pointer; border: 1px solid; transition: all 0.18s; background: transparent;
+      letter-spacing: 0.04em;
     }
     .share-btn:hover { transform: translateY(-1px); }
+    .s-tw { color: #1da1f2; border-color: rgba(29,161,242,0.3); }
+    .s-tw:hover { background: rgba(29,161,242,0.1); }
+    .s-fb { color: #4267b2; border-color: rgba(66,103,178,0.3); }
+    .s-fb:hover { background: rgba(66,103,178,0.1); }
+    .s-cp { color: var(--sand); border-color: rgba(244,213,141,0.3); }
+    .s-cp:hover { background: rgba(244,213,141,0.1); }
+    .s-dl { color: var(--biolum); border-color: rgba(0,245,196,0.3); }
+    .s-dl:hover { background: rgba(0,245,196,0.1); }
 
-    .share-twitter { color: #1da1f2; border-color: rgba(29, 161, 242, 0.3); background: rgba(29, 161, 242, 0.08); }
-    .share-twitter:hover { background: rgba(29, 161, 242, 0.15); }
-    .share-facebook { color: #4267b2; border-color: rgba(66, 103, 178, 0.3); background: rgba(66, 103, 178, 0.08); }
-    .share-facebook:hover { background: rgba(66, 103, 178, 0.15); }
-    .share-copy { color: var(--sand); border-color: rgba(244, 213, 141, 0.3); background: rgba(244, 213, 141, 0.08); }
-    .share-copy:hover { background: rgba(244, 213, 141, 0.15); }
-    .share-download { color: var(--biolum); border-color: rgba(0, 245, 196, 0.3); background: rgba(0, 245, 196, 0.08); }
-    .share-download:hover { background: rgba(0, 245, 196, 0.15); }
-
-    /* Toast */
     .toast {
-      position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(100px);
-      background: var(--ocean-surface);
-      border: 1px solid var(--glass-border);
-      color: var(--biolum);
-      padding: 0.75rem 1.5rem;
-      border-radius: 30px;
-      font-size: 0.78rem;
-      transition: transform 0.3s ease;
-      z-index: 1000;
-      backdrop-filter: blur(12px);
+      position: fixed; bottom: 2rem; left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--ocean-surface); border: 1px solid var(--glass-border);
+      color: var(--biolum); padding: 0.65rem 1.4rem;
+      border-radius: 30px; font-size: 0.76rem;
+      transition: transform 0.3s ease; z-index: 999;
+      backdrop-filter: blur(12px); white-space: nowrap;
     }
     .toast.show { transform: translateX(-50%) translateY(0); }
 
-    /* Loading spinner */
-    .scanning-indicator {
-      display: none;
-      flex-direction: column; align-items: center; gap: 1rem;
-      padding: 3rem 2rem;
-      text-align: center;
-    }
-    .scanning-indicator.visible { display: flex; }
-
-    .sonar {
-      position: relative; width: 80px; height: 80px;
-    }
-    .sonar-circle {
-      position: absolute; inset: 0;
-      border-radius: 50%;
-      border: 2px solid var(--biolum);
-      animation: sonar-pulse 1.5s ease-out infinite;
-    }
-    .sonar-circle:nth-child(2) { animation-delay: 0.5s; }
-    .sonar-circle:nth-child(3) { animation-delay: 1s; }
-    @keyframes sonar-pulse {
-      0% { transform: scale(0.2); opacity: 1; }
-      100% { transform: scale(1.2); opacity: 0; }
-    }
-    .sonar-center {
-      position: absolute; inset: 0;
-      display: grid; place-items: center;
-      font-size: 1.8rem;
-    }
-    .scanning-text {
-      font-size: 0.8rem; color: var(--text-secondary);
-    }
-    .scanning-text span { color: var(--biolum); }
-
-    /* Footer */
     footer {
-      position: relative; z-index: 1;
-      text-align: center; padding: 2rem;
-      font-size: 0.68rem; color: var(--text-secondary);
+      position: relative; z-index: 1; text-align: center;
+      padding: 1.5rem; font-size: 0.65rem; color: var(--text-secondary);
       border-top: 1px solid var(--glass-border);
     }
 
-    /* Scrollbar */
-    ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-track { background: var(--ocean-deep); }
-    ::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 2px; }
+    canvas#share-canvas { display: none; }
   </style>
 </head>
 <body>
-  <!-- Particles -->
-  <div class="particles" id="particles"></div>
 
-  <!-- Header -->
-  <header>
-    <div class="logo">
-      <div class="logo-icon">🐟</div>
-      <div>
-        <div class="logo-text">AquaScan</div>
-        <div class="logo-sub">AI Fish Identifier</div>
+<div class="particles" id="particles"></div>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🐟</div>
+    <div>
+      <div class="logo-text">AquaScan</div>
+      <div class="logo-sub">AI Fish Identifier</div>
+    </div>
+  </div>
+  <div class="header-badge">TensorFlow.js</div>
+</header>
+
+<main>
+  <div class="hero">
+    <h1>Identify Any Fish<br/><span>Instantly</span></h1>
+    <p>Point your camera at a fish or upload a photo — our on-device AI identifies the species and reveals everything about it.</p>
+  </div>
+
+  <div class="app-grid">
+
+    <!-- LEFT: Camera + Upload -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-dot" style="background:var(--biolum)"></div>
+        <span class="panel-label">Scanner</span>
       </div>
-    </div>
-    <div class="header-badge">Powered by TensorFlow.js</div>
-  </header>
 
-  <main>
-    <!-- Hero -->
-    <div class="hero">
-      <h1>Identify Any Fish<br/><span>Instantly</span></h1>
-      <p>Point your camera at a fish or upload an image — our AI will identify the species and reveal everything about it.</p>
-    </div>
-
-    <!-- Scanner -->
-    <div class="scanner-wrapper">
-      <!-- Camera Panel -->
-      <div class="panel">
-        <div class="panel-header">
-          <div class="dot" style="background: var(--biolum)"></div>
-          <span>Live Scanner</span>
+      <div class="camera-wrap">
+        <video id="video" autoplay muted playsinline></video>
+        <canvas id="snap-canvas"></canvas>
+        <div class="cam-placeholder" id="cam-placeholder">
+          <div class="cam-placeholder-icon">📷</div>
+          <span>Camera not started</span>
         </div>
-
-        <div class="camera-container">
-          <video id="video" autoplay muted playsinline></video>
-          <canvas id="preview-canvas"></canvas>
-          <div class="camera-placeholder" id="camera-placeholder">
-            <div class="fish-icon">🎥</div>
-            <span>Camera not started</span>
-          </div>
-          <div class="scan-overlay">
-            <div class="scan-corner tl"></div>
-            <div class="scan-corner tr"></div>
-            <div class="scan-corner bl"></div>
-            <div class="scan-corner br"></div>
-            <div class="scan-line" id="scan-line"></div>
-          </div>
-        </div>
-
-        <div class="controls">
-          <div class="model-status" id="model-status">
-            <div class="status-dot loading" id="status-dot"></div>
-            <span id="status-text">Loading AI model…</span>
-          </div>
-
-          <button class="btn btn-primary" id="start-camera-btn" disabled>
-            📷 Start Camera
-          </button>
-          <button class="btn btn-primary" id="scan-btn" disabled style="display:none">
-            🔍 Scan Fish
-          </button>
-          <button class="btn btn-secondary" id="stop-camera-btn" style="display:none">
-            ⏹ Stop Camera
-          </button>
-
-          <label class="upload-area" for="file-input">
-            <input type="file" id="file-input" accept="image/*" />
-            📂 Upload Image to Scan
-          </label>
+        <div class="scan-overlay">
+          <div class="scan-corner tl"></div>
+          <div class="scan-corner tr"></div>
+          <div class="scan-corner bl"></div>
+          <div class="scan-corner br"></div>
+          <div class="scan-line" id="scan-line"></div>
         </div>
       </div>
 
-      <!-- Results Panel -->
-      <div class="result-panel">
-        <!-- Empty state -->
-        <div class="result-empty" id="result-empty">
-          <div class="big-icon">🐡</div>
-          <strong style="color: var(--text-primary); display: block; margin-bottom: 0.5rem; font-family: 'Syne', sans-serif;">Ready to Scan</strong>
-          Start your camera and point it at a fish,<br/>or upload a photo to identify a species.
+      <div class="controls">
+        <div class="model-status">
+          <div class="status-dot loading" id="status-dot"></div>
+          <span id="status-text">Loading AI model…</span>
         </div>
 
-        <!-- Scanning state -->
-        <div class="scanning-indicator" id="scanning-indicator">
-          <div class="sonar">
-            <div class="sonar-circle"></div>
-            <div class="sonar-circle"></div>
-            <div class="sonar-circle"></div>
-            <div class="sonar-center">🐟</div>
-          </div>
-          <div class="scanning-text">Analyzing… <span>identifying species</span></div>
+        <button class="btn btn-primary" id="btn-start" disabled>📷 Start Camera</button>
+        <button class="btn btn-primary" id="btn-scan" style="display:none">🔍 Scan Fish</button>
+        <button class="btn btn-secondary" id="btn-stop" style="display:none">⏹ Stop Camera</button>
+
+        <label class="upload-label" for="file-input">
+          📂 Upload Image to Scan
+        </label>
+        <input type="file" id="file-input" accept="image/*" style="display:none" />
+      </div>
+    </div>
+
+    <!-- RIGHT: Results -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-dot" style="background:#457b9d"></div>
+        <span class="panel-label">Species Info</span>
+      </div>
+
+      <!-- Empty -->
+      <div class="result-empty" id="result-empty">
+        <span class="result-empty-icon">🐡</span>
+        <strong>Ready to Scan</strong>
+        Start your camera and aim at a fish,<br/>or upload a photo to identify the species.
+      </div>
+
+      <!-- Scanning -->
+      <div class="scanning-state" id="scanning-state">
+        <div class="sonar">
+          <div class="sonar-ring"></div>
+          <div class="sonar-ring"></div>
+          <div class="sonar-ring"></div>
+          <div class="sonar-inner">🐟</div>
         </div>
+        <div class="scanning-label">Analyzing… <em>identifying species</em></div>
+      </div>
 
-        <!-- Result content -->
-        <div class="result-content" id="result-content">
-          <div class="result-hero" id="result-hero">
-            <div class="fish-emoji-badge" id="fish-badge">🐠</div>
-            <div>
-              <div class="result-name" id="result-name">–</div>
-              <div class="result-scientific" id="result-scientific">–</div>
-              <div class="result-confidence" id="result-confidence"></div>
-            </div>
+      <!-- Result -->
+      <div class="result-card" id="result-card">
+        <div class="result-top">
+          <div class="fish-badge" id="r-badge">🐠</div>
+          <div>
+            <div class="fish-name" id="r-name">–</div>
+            <div class="fish-sci" id="r-sci">–</div>
+            <div class="fish-conf" id="r-conf"></div>
           </div>
-
-          <div class="result-body">
-            <div class="conservation-badge" id="conservation-badge"></div>
-
-            <div class="info-grid">
-              <div class="info-chip">
-                <div class="info-chip-label">Family</div>
-                <div class="info-chip-value" id="info-family">–</div>
-              </div>
-              <div class="info-chip">
-                <div class="info-chip-label">Habitat</div>
-                <div class="info-chip-value" id="info-habitat">–</div>
-              </div>
-              <div class="info-chip">
-                <div class="info-chip-label">Size</div>
-                <div class="info-chip-value" id="info-size">–</div>
-              </div>
-              <div class="info-chip">
-                <div class="info-chip-label">Lifespan</div>
-                <div class="info-chip-value" id="info-lifespan">–</div>
-              </div>
-              <div class="info-chip">
-                <div class="info-chip-label">Origin</div>
-                <div class="info-chip-value" id="info-origin">–</div>
-              </div>
-              <div class="info-chip">
-                <div class="info-chip-label">Water Temp</div>
-                <div class="info-chip-value" id="info-temp">–</div>
-              </div>
-            </div>
-
-            <div class="description-text" id="result-description"></div>
-
-            <div class="fun-fact">
-              <div class="fun-fact-label">💡 Fun Fact</div>
-              <div class="fun-fact-text" id="result-funfact"></div>
-            </div>
+        </div>
+        <div class="result-body">
+          <div class="conservation" id="r-conservation"></div>
+          <div class="info-grid">
+            <div class="info-chip"><div class="chip-label">Family</div><div class="chip-val" id="r-family">–</div></div>
+            <div class="info-chip"><div class="chip-label">Habitat</div><div class="chip-val" id="r-habitat">–</div></div>
+            <div class="info-chip"><div class="chip-label">Size</div><div class="chip-val" id="r-size">–</div></div>
+            <div class="info-chip"><div class="chip-label">Lifespan</div><div class="chip-val" id="r-lifespan">–</div></div>
+            <div class="info-chip"><div class="chip-label">Origin</div><div class="chip-val" id="r-origin">–</div></div>
+            <div class="info-chip"><div class="chip-label">Water Temp</div><div class="chip-val" id="r-temp">–</div></div>
           </div>
-
-          <div class="share-section">
-            <div class="share-label">Share this discovery</div>
-            <div class="share-buttons">
-              <button class="share-btn share-twitter" onclick="shareTwitter()">
-                𝕏 Twitter
-              </button>
-              <button class="share-btn share-facebook" onclick="shareFacebook()">
-                f Facebook
-              </button>
-              <button class="share-btn share-copy" onclick="copyInfo()">
-                📋 Copy Info
-              </button>
-              <button class="share-btn share-download" onclick="downloadCard()">
-                ⬇ Download Card
-              </button>
-            </div>
+          <div class="fish-desc" id="r-desc"></div>
+          <div class="fun-fact">
+            <div class="fun-fact-label">💡 Fun Fact</div>
+            <div class="fun-fact-text" id="r-fact"></div>
+          </div>
+        </div>
+        <div class="share-section">
+          <div class="share-label">Share this discovery</div>
+          <div class="share-row">
+            <button class="share-btn s-tw" onclick="shareTwitter()">𝕏 Twitter</button>
+            <button class="share-btn s-fb" onclick="shareFacebook()">f Facebook</button>
+            <button class="share-btn s-cp" onclick="copyInfo()">📋 Copy</button>
+            <button class="share-btn s-dl" onclick="downloadCard()">⬇ Card</button>
           </div>
         </div>
       </div>
     </div>
-  </main>
+  </div>
+</main>
 
-  <footer>
-    AquaScan uses TensorFlow.js + MobileNet for on-device AI identification &nbsp;·&nbsp; No data leaves your device
-  </footer>
+<footer>AquaScan · TensorFlow.js + MobileNet · All processing happens on your device · No data sent to servers</footer>
+<div class="toast" id="toast"></div>
+<canvas id="share-canvas"></canvas>
 
-  <div class="toast" id="toast"></div>
+<script>
+// ─── Fish Database ───────────────────────────────────────────────────────────
+var FISH = {
+  goldfish:  { name:"Goldfish", scientific:"Carassius auratus", family:"Cyprinidae", habitat:"Freshwater", origin:"East Asia", size:"20–45 cm", lifespan:"10–15 yrs", diet:"Omnivore", status:"Least Concern", desc:"One of the earliest domesticated fish, goldfish were selectively bred in ancient China over 1,000 years ago. They exhibit a wide variety of colors, fin shapes, and body types.", fact:"Goldfish have a memory span of at least 3 months — the 3-second myth is completely false!", temp:"18–24°C", emoji:"🐠", color:"#f4a261" },
+  shark:     { name:"Great White Shark", scientific:"Carcharodon carcharias", family:"Lamnidae", habitat:"Marine – open ocean", origin:"Worldwide", size:"4–6 m", lifespan:"70+ yrs", diet:"Carnivore", status:"Vulnerable", desc:"The world's largest predatory fish. Despite a fearsome reputation, attacks on humans are rare and often cases of mistaken identity.", fact:"Great whites can detect a single drop of blood in 100 liters of water.", temp:"12–24°C", emoji:"🦈", color:"#457b9d" },
+  clownfish: { name:"Clownfish", scientific:"Amphiprioninae", family:"Pomacentridae", habitat:"Marine – tropical reefs", origin:"Indo-Pacific", size:"7–17 cm", lifespan:"6–10 yrs", diet:"Omnivore", status:"Least Concern", desc:"Famous for their symbiotic relationship with sea anemones. They are immune to the anemone's stinging tentacles and are sequential hermaphrodites — all born male.", fact:"All clownfish are born male. When the dominant female dies, the largest male changes sex.", temp:"24–27°C", emoji:"🐠", color:"#e76f51" },
+  tuna:      { name:"Bluefin Tuna", scientific:"Thunnus thynnus", family:"Scombridae", habitat:"Marine – open ocean", origin:"Atlantic & Mediterranean", size:"2–3 m", lifespan:"35–40 yrs", diet:"Carnivore", status:"Endangered", desc:"One of the fastest fish in the ocean at 70 km/h. They are warm-blooded — a rare fish trait — allowing them to thrive in cold waters.", fact:"A single bluefin tuna can fetch over $1 million at auction in Japan.", temp:"10–30°C", emoji:"🐟", color:"#2a9d8f" },
+  salmon:    { name:"Atlantic Salmon", scientific:"Salmo salar", family:"Salmonidae", habitat:"Freshwater & Marine", origin:"North Atlantic", size:"70–150 cm", lifespan:"3–8 yrs", diet:"Carnivore", status:"Least Concern", desc:"Anadromous fish that migrate from the ocean back to freshwater birthstreams to spawn. They navigate using Earth's magnetic field and scent memory.", fact:"Salmon stop eating entirely once they enter freshwater for spawning, surviving on stored body fat.", temp:"6–20°C", emoji:"🐟", color:"#e9c46a" },
+  trout:     { name:"Rainbow Trout", scientific:"Oncorhynchus mykiss", family:"Salmonidae", habitat:"Freshwater", origin:"Pacific coast, North America", size:"30–76 cm", lifespan:"4–6 yrs", diet:"Carnivore", status:"Least Concern", desc:"Named for the distinctive pink stripe along their lateral line. They require cold, well-oxygenated water and are one of the most popular sport fish in the world.", fact:"Rainbow trout can change coloration based on habitat, diet, and breeding — no two fish look identical.", temp:"10–18°C", emoji:"🎣", color:"#48cae4" },
+  tilapia:   { name:"Nile Tilapia", scientific:"Oreochromis niloticus", family:"Cichlidae", habitat:"Freshwater", origin:"Africa & Middle East", size:"30–60 cm", lifespan:"9–11 yrs", diet:"Omnivore", status:"Least Concern", desc:"One of the most farmed fish globally. Hardy and adaptable, capable of surviving in low-oxygen environments and a cornerstone of sustainable aquaculture.", fact:"Some tilapia are mouthbrooders — the mother incubates and protects fry inside her mouth after hatching.", temp:"20–30°C", emoji:"🐠", color:"#52b788" },
+  carp:      { name:"Common Carp", scientific:"Cyprinus carpio", family:"Cyprinidae", habitat:"Freshwater", origin:"Asia & Europe", size:"40–80 cm", lifespan:"20–47 yrs", diet:"Omnivore", status:"Vulnerable", desc:"One of the most widely distributed freshwater fish. Introduced to every continent except Antarctica and considered invasive in many regions.", fact:"The oldest recorded carp 'Hanako' lived in Japan for an estimated 226 years.", temp:"10–25°C", emoji:"🐟", color:"#b5838d" },
+  angelfish: { name:"Freshwater Angelfish", scientific:"Pterophyllum scalare", family:"Cichlidae", habitat:"Freshwater – Amazon", origin:"South America", size:"15–20 cm", lifespan:"10–12 yrs", diet:"Omnivore", status:"Least Concern", desc:"Prized aquarium fish with a distinctive triangular body and flowing fins. They navigate the Amazon using their flattened bodies to move through dense plant stems.", fact:"Angelfish are devoted parents — mated pairs guard and fan their eggs to maintain oxygen flow.", temp:"24–30°C", emoji:"🐠", color:"#c77dff" },
+  bass:      { name:"Largemouth Bass", scientific:"Micropterus salmoides", family:"Centrarchidae", habitat:"Freshwater", origin:"Eastern North America", size:"30–60 cm", lifespan:"10–16 yrs", diet:"Carnivore", status:"Least Concern", desc:"America's most popular game fish and an aggressive apex predator. It ambushes prey from vegetated cover with explosive strikes.", fact:"Largemouth bass can sense prey through pressure changes in the water using their lateral line.", temp:"18–27°C", emoji:"🎣", color:"#588157" },
+  unknown:   { name:"Unidentified Species", scientific:"Species unidentified", family:"Unknown", habitat:"Aquatic", origin:"Unknown", size:"Varies", lifespan:"Varies", diet:"Varies", status:"Unknown", desc:"Our AI could not precisely identify this fish. Try again with a clearer, well-lit photo showing the full body of the fish against a contrasting background.", fact:"There are over 34,000 known fish species — more than all other vertebrate species combined!", temp:"Varies", emoji:"🐡", color:"#90e0ef" }
+};
 
-  <!-- Hidden canvas for download -->
-  <canvas id="share-canvas" style="display:none"></canvas>
+var KEYWORDS = {
+  goldfish:  ["goldfish","gold fish","carassius","koi","carp"],
+  shark:     ["shark","white shark","tiger shark","hammerhead","lemon shark","bull shark"],
+  clownfish: ["clownfish","clown fish","anemone fish","amphiprion"],
+  tuna:      ["tuna","bluefin","yellowfin","skipjack","albacore"],
+  salmon:    ["salmon","salmo","coho","chinook","sockeye"],
+  trout:     ["trout","rainbow","oncorhynchus","brook trout","steelhead"],
+  tilapia:   ["tilapia","oreochromis","cichlid"],
+  carp:      ["carp","cyprinus"],
+  angelfish: ["angelfish","angel fish","pterophyllum"],
+  bass:      ["bass","largemouth","smallmouth","striped bass","sea bass","perch"]
+};
 
-  <script type="module">
-    import * as tf from 'https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js';
-    import * as mobilenet from 'https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.1/dist/mobilenet.min.js';
-
-    // ── Fish Database ──
-    const FISH_DB = {
-      goldfish: { name:"Goldfish", scientific:"Carassius auratus", family:"Cyprinidae", habitat:"Freshwater", origin:"East Asia", size:"20–45 cm", lifespan:"10–15 years", diet:"Omnivore", conservationStatus:"Least Concern", description:"One of the earliest domesticated fish, goldfish were selectively bred in ancient China over 1,000 years ago. They thrive in ponds and aquariums, exhibiting a wide variety of colors and fin shapes.", funFact:"Goldfish have a memory span of at least 3 months — the 3-second myth is completely false!", waterTemp:"18–24°C", emoji:"🐠", color:"#f4a261" },
-      shark: { name:"Great White Shark", scientific:"Carcharodon carcharias", family:"Lamnidae", habitat:"Marine – open ocean", origin:"Worldwide", size:"4–6 m", lifespan:"70+ years", diet:"Carnivore", conservationStatus:"Vulnerable", description:"The world's largest predatory fish, the great white is renowned for its power and acute senses. Despite their fearsome reputation, attacks on humans are rare and often cases of mistaken identity.", funFact:"Great whites have ~300 serrated teeth and can detect a single drop of blood in 100 liters of water.", waterTemp:"12–24°C", emoji:"🦈", color:"#457b9d" },
-      clownfish: { name:"Clownfish", scientific:"Amphiprioninae", family:"Pomacentridae", habitat:"Marine – tropical reefs", origin:"Indian & Pacific Oceans", size:"7–17 cm", lifespan:"6–10 years", diet:"Omnivore", conservationStatus:"Least Concern", description:"Famous for their symbiotic relationship with sea anemones, clownfish are immune to the anemone's stinging tentacles. They are sequential hermaphrodites — all born male.", funFact:"All clownfish are born male. When the dominant female dies, the largest male changes sex to female.", waterTemp:"24–27°C", emoji:"🐠", color:"#e76f51" },
-      tuna: { name:"Bluefin Tuna", scientific:"Thunnus thynnus", family:"Scombridae", habitat:"Marine – open ocean", origin:"Atlantic & Mediterranean", size:"2–3 m", lifespan:"35–40 years", diet:"Carnivore", conservationStatus:"Endangered", description:"One of the fastest fish in the ocean, capable of 70 km/h. They are warm-blooded — a rare fish trait — allowing them to thrive in cold waters.", funFact:"A single bluefin tuna can fetch over $1 million at auction in Japan, making it one of the most valuable fish on Earth.", waterTemp:"10–30°C", emoji:"🐟", color:"#2a9d8f" },
-      salmon: { name:"Atlantic Salmon", scientific:"Salmo salar", family:"Salmonidae", habitat:"Freshwater & Marine", origin:"North Atlantic", size:"70–150 cm", lifespan:"3–8 years", diet:"Carnivore", conservationStatus:"Least Concern", description:"Anadromous fish that migrate from the ocean back to freshwater birthstreams to spawn. They navigate using the Earth's magnetic field and scent memory.", funFact:"Salmon stop eating entirely once they enter freshwater for spawning, surviving entirely off stored body fat.", waterTemp:"6–20°C", emoji:"🐟", color:"#e9c46a" },
-      trout: { name:"Rainbow Trout", scientific:"Oncorhynchus mykiss", family:"Salmonidae", habitat:"Freshwater", origin:"Pacific coast of North America", size:"30–76 cm", lifespan:"4–6 years", diet:"Carnivore", conservationStatus:"Least Concern", description:"Named for the distinctive pink stripe along their lateral line, rainbow trout require cold, well-oxygenated water. They are one of the most popular sport fish in the world.", funFact:"Rainbow trout can change their coloration based on habitat, diet, and breeding condition — no two fish look exactly alike.", waterTemp:"10–18°C", emoji:"🎣", color:"#48cae4" },
-      tilapia: { name:"Nile Tilapia", scientific:"Oreochromis niloticus", family:"Cichlidae", habitat:"Freshwater", origin:"Africa & Middle East", size:"30–60 cm", lifespan:"9–11 years", diet:"Omnivore", conservationStatus:"Least Concern", description:"One of the most farmed fish globally, tilapia are hardy and adaptable, capable of surviving in low-oxygen environments. They are a cornerstone of sustainable aquaculture.", funFact:"Some tilapia are mouthbrooders — the mother incubates eggs and protects fry inside her mouth after hatching.", waterTemp:"20–30°C", emoji:"🐠", color:"#52b788" },
-      carp: { name:"Common Carp", scientific:"Cyprinus carpio", family:"Cyprinidae", habitat:"Freshwater", origin:"Asia & Europe", size:"40–80 cm", lifespan:"20–47 years", diet:"Omnivore", conservationStatus:"Vulnerable", description:"One of the most widely distributed freshwater fish, carp have been introduced to every continent except Antarctica. Considered invasive in many regions due to their disruptive feeding behavior.", funFact:"The oldest recorded carp, 'Hanako', lived in Japan for an estimated 226 years based on scale ring analysis.", waterTemp:"10–25°C", emoji:"🐟", color:"#b5838d" },
-      angelfish: { name:"Freshwater Angelfish", scientific:"Pterophyllum scalare", family:"Cichlidae", habitat:"Freshwater – Amazon", origin:"South America", size:"15–20 cm", lifespan:"10–12 years", diet:"Omnivore", conservationStatus:"Least Concern", description:"Prized aquarium fish with a distinctive triangular body and flowing fins. In the wild they navigate Amazon riverbanks using their flattened body to move through dense plant stems.", funFact:"Angelfish are devoted parents — mated pairs guard and fan their eggs with their fins to maintain oxygen flow.", waterTemp:"24–30°C", emoji:"🐠", color:"#c77dff" },
-      bass: { name:"Largemouth Bass", scientific:"Micropterus salmoides", family:"Centrarchidae", habitat:"Freshwater", origin:"Eastern North America", size:"30–60 cm", lifespan:"10–16 years", diet:"Carnivore", conservationStatus:"Least Concern", description:"America's most popular game fish, the largemouth bass is an aggressive apex predator. It ambushes prey from vegetated cover with explosive strikes and acrobatic jumps when hooked.", funFact:"Largemouth bass detect pressure changes using their lateral line, allowing them to sense prey without seeing it.", waterTemp:"18–27°C", emoji:"🎣", color:"#588157" },
-      default: { name:"Unidentified Species", scientific:"Species unidentified", family:"Unknown", habitat:"Aquatic", origin:"Unknown", size:"Varies", lifespan:"Varies", diet:"Varies", conservationStatus:"Unknown", description:"Our AI was unable to precisely identify this fish. Try again with a clearer, brighter photo — ideally showing the fish's full body against a contrasting background.", funFact:"There are over 34,000 known fish species — more than all other vertebrate species combined!", waterTemp:"Varies", emoji:"🐡", color:"#90e0ef" }
-    };
-
-    const KEYWORD_MAP = {
-      goldfish: ["goldfish","gold fish","carassius","koi"],
-      shark: ["shark","white shark","tiger shark","hammerhead","lemon shark"],
-      clownfish: ["clownfish","clown fish","anemone fish","amphiprion"],
-      tuna: ["tuna","bluefin","yellowfin","skipjack","albacore"],
-      salmon: ["salmon","salmo","coho","chinook"],
-      trout: ["trout","rainbow trout","oncorhynchus","brook trout"],
-      tilapia: ["tilapia","oreochromis"],
-      carp: ["carp","cyprinus","common carp"],
-      angelfish: ["angelfish","angel fish","pterophyllum"],
-      bass: ["bass","largemouth","smallmouth","striped bass","sea bass"]
-    };
-
-    function matchFish(predictions) {
-      if (!predictions?.length) return FISH_DB.default;
-      for (const pred of predictions) {
-        const label = pred.className.toLowerCase();
-        for (const [key, kws] of Object.entries(KEYWORD_MAP)) {
-          if (kws.some(k => label.includes(k))) {
-            return { ...FISH_DB[key], confidence: pred.probability };
-          }
+function matchFish(predictions) {
+  if (!predictions || !predictions.length) return FISH.unknown;
+  for (var i = 0; i < predictions.length; i++) {
+    var label = predictions[i].className.toLowerCase();
+    for (var key in KEYWORDS) {
+      var kws = KEYWORDS[key];
+      for (var j = 0; j < kws.length; j++) {
+        if (label.indexOf(kws[j]) !== -1) {
+          return Object.assign({}, FISH[key], { confidence: predictions[i].probability });
         }
       }
-      const top = predictions[0];
-      const label = top.className.toLowerCase();
-      if (["fish","aquatic","marine","sea","ocean","water","pond","river","coral","reef","fin","gill","scale"].some(w => label.includes(w))) {
-        return { ...FISH_DB.default, detectedAs: top.className, confidence: top.probability };
-      }
-      return { ...FISH_DB.default, detectedAs: top.className, confidence: top.probability };
     }
-
-    // ── State ──
-    let model = null;
-    let stream = null;
-    let currentFish = null;
-    let capturedImageData = null;
-
-    // ── DOM ──
-    const video = document.getElementById('video');
-    const previewCanvas = document.getElementById('preview-canvas');
-    const startBtn = document.getElementById('start-camera-btn');
-    const scanBtn = document.getElementById('scan-btn');
-    const stopBtn = document.getElementById('stop-camera-btn');
-    const fileInput = document.getElementById('file-input');
-    const statusDot = document.getElementById('status-dot');
-    const statusText = document.getElementById('status-text');
-    const scanLine = document.getElementById('scan-line');
-    const placeholder = document.getElementById('camera-placeholder');
-
-    // ── Particles ──
-    const particlesContainer = document.getElementById('particles');
-    for (let i = 0; i < 30; i++) {
-      const p = document.createElement('div');
-      p.className = 'particle';
-      p.style.left = Math.random() * 100 + '%';
-      p.style.animationDuration = (8 + Math.random() * 12) + 's';
-      p.style.animationDelay = (Math.random() * 15) + 's';
-      p.style.width = p.style.height = (1 + Math.random() * 3) + 'px';
-      particlesContainer.appendChild(p);
+  }
+  var top = predictions[0];
+  var tl = top.className.toLowerCase();
+  var aquaWords = ["fish","aquatic","marine","sea","ocean","pond","river","coral","reef","fin","gill","scale","swim","water","eel","ray","pike","cod","herring","mackerel","sardine","anchovy"];
+  for (var w = 0; w < aquaWords.length; w++) {
+    if (tl.indexOf(aquaWords[w]) !== -1) {
+      return Object.assign({}, FISH.unknown, { detectedAs: top.className, confidence: top.probability });
     }
+  }
+  return Object.assign({}, FISH.unknown, { detectedAs: top.className, confidence: top.probability });
+}
 
-    // ── Load model ──
-    async function loadModel() {
-      try {
-        statusDot.className = 'status-dot loading';
-        statusText.textContent = 'Loading AI model…';
-        model = await mobilenet.load({ version: 2, alpha: 1.0 });
+// ─── State ───────────────────────────────────────────────────────────────────
+var model = null;
+var mediaStream = null;
+var currentFish = null;
+var capturedDataURL = null;
+
+// ─── DOM refs ────────────────────────────────────────────────────────────────
+var video        = document.getElementById('video');
+var snapCanvas   = document.getElementById('snap-canvas');
+var camPlaceholder = document.getElementById('cam-placeholder');
+var btnStart     = document.getElementById('btn-start');
+var btnScan      = document.getElementById('btn-scan');
+var btnStop      = document.getElementById('btn-stop');
+var fileInput    = document.getElementById('file-input');
+var statusDot    = document.getElementById('status-dot');
+var statusText   = document.getElementById('status-text');
+var scanLine     = document.getElementById('scan-line');
+
+// ─── Particles ───────────────────────────────────────────────────────────────
+var pc = document.getElementById('particles');
+for (var p = 0; p < 28; p++) {
+  var el = document.createElement('div');
+  el.className = 'particle';
+  el.style.left = (Math.random() * 100) + '%';
+  el.style.width = el.style.height = (1 + Math.random() * 3) + 'px';
+  el.style.animationDuration = (8 + Math.random() * 14) + 's';
+  el.style.animationDelay = (Math.random() * 16) + 's';
+  pc.appendChild(el);
+}
+
+// ─── Load TF Model ───────────────────────────────────────────────────────────
+function loadModel() {
+  statusDot.className = 'status-dot loading';
+  statusText.textContent = 'Loading AI model…';
+
+  // Wait for mobilenet global to be available
+  var attempts = 0;
+  var interval = setInterval(function() {
+    attempts++;
+    if (typeof mobilenet !== 'undefined' && typeof tf !== 'undefined') {
+      clearInterval(interval);
+      mobilenet.load({ version: 2, alpha: 1.0 }).then(function(m) {
+        model = m;
         statusDot.className = 'status-dot ready';
-        statusText.textContent = 'AI model ready';
-        startBtn.disabled = false;
-      } catch (e) {
+        statusText.textContent = 'AI model ready ✓';
+        btnStart.disabled = false;
+      }).catch(function(err) {
+        console.error('Model load error:', err);
         statusDot.className = 'status-dot error';
         statusText.textContent = 'Model failed – check connection';
-        console.error(e);
-      }
-    }
-
-    // ── Camera ──
-    startBtn.addEventListener('click', async () => {
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: 640, height: 480 } });
-        video.srcObject = stream;
-        placeholder.style.display = 'none';
-        video.style.display = 'block';
-        startBtn.style.display = 'none';
-        scanBtn.style.display = 'flex';
-        stopBtn.style.display = 'flex';
-      } catch (e) {
-        showToast('Camera access denied. Use file upload instead.');
-      }
-    });
-
-    stopBtn.addEventListener('click', () => {
-      if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
-      video.srcObject = null;
-      video.style.display = 'none';
-      placeholder.style.display = 'flex';
-      startBtn.style.display = 'flex';
-      scanBtn.style.display = 'none';
-      stopBtn.style.display = 'none';
-      previewCanvas.style.display = 'none';
-    });
-
-    // ── Scan from camera ──
-    scanBtn.addEventListener('click', async () => {
-      if (!model) return;
-      const ctx = previewCanvas.getContext('2d');
-      previewCanvas.width = video.videoWidth || 640;
-      previewCanvas.height = video.videoHeight || 480;
-      ctx.drawImage(video, 0, 0);
-      previewCanvas.style.display = 'block';
-      capturedImageData = previewCanvas.toDataURL('image/jpeg');
-      scanLine.classList.add('active');
-      showScanning();
-      try {
-        const preds = await model.classify(previewCanvas);
-        displayResult(matchFish(preds));
-      } catch (e) {
-        displayResult(FISH_DB.default);
-      }
-      scanLine.classList.remove('active');
-    });
-
-    // ── Upload image ──
-    fileInput.addEventListener('change', async (e) => {
-      const file = e.target.files[0];
-      if (!file || !model) {
-        if (!model) showToast('AI model still loading, please wait…');
-        return;
-      }
-      const url = URL.createObjectURL(file);
-      const img = new Image();
-      img.onload = async () => {
-        const ctx = previewCanvas.getContext('2d');
-        previewCanvas.width = img.width;
-        previewCanvas.height = img.height;
-        ctx.drawImage(img, 0, 0);
-        previewCanvas.style.display = 'block';
-        video.style.display = 'none';
-        capturedImageData = previewCanvas.toDataURL('image/jpeg');
-        showScanning();
-        try {
-          const preds = await model.classify(img);
-          displayResult(matchFish(preds));
-        } catch (e) {
-          displayResult(FISH_DB.default);
-        }
-        URL.revokeObjectURL(url);
-      };
-      img.src = url;
-    });
-
-    // ── Display result ──
-    function showScanning() {
-      document.getElementById('result-empty').style.display = 'none';
-      document.getElementById('scanning-indicator').classList.add('visible');
-      document.getElementById('result-content').classList.remove('visible');
-    }
-
-    function displayResult(fish) {
-      currentFish = fish;
-      document.getElementById('scanning-indicator').classList.remove('visible');
-      document.getElementById('result-content').classList.add('visible');
-
-      document.getElementById('fish-badge').textContent = fish.emoji;
-      document.getElementById('fish-badge').style.background = fish.color + '22';
-      document.getElementById('result-name').textContent = fish.name;
-      document.getElementById('result-scientific').textContent = fish.scientific;
-
-      const conf = fish.confidence;
-      if (conf) {
-        const pct = Math.round(conf * 100);
-        document.getElementById('result-confidence').innerHTML = `<span style="color:var(--biolum)">●</span> ${pct}% confidence`;
-      } else {
-        document.getElementById('result-confidence').textContent = '';
-      }
-
-      // Conservation badge
-      const cs = fish.conservationStatus;
-      const csColors = { 'Least Concern': '#52b788', 'Vulnerable': '#f4a261', 'Endangered': '#e63946', 'Unknown': '#888' };
-      const badge = document.getElementById('conservation-badge');
-      badge.style.color = csColors[cs] || '#888';
-      badge.style.background = (csColors[cs] || '#888') + '18';
-      badge.style.borderColor = (csColors[cs] || '#888') + '44';
-      badge.textContent = `⬡ ${cs}`;
-
-      document.getElementById('info-family').textContent = fish.family;
-      document.getElementById('info-habitat').textContent = fish.habitat;
-      document.getElementById('info-size').textContent = fish.size;
-      document.getElementById('info-lifespan').textContent = fish.lifespan;
-      document.getElementById('info-origin').textContent = fish.origin;
-      document.getElementById('info-temp').textContent = fish.waterTemp;
-      document.getElementById('result-description').textContent = fish.description;
-      document.getElementById('result-funfact').textContent = fish.funFact;
-    }
-
-    // ── Share ──
-    window.shareTwitter = () => {
-      if (!currentFish) return;
-      const text = encodeURIComponent(`🐟 I just identified a ${currentFish.name} (${currentFish.scientific}) using AquaScan!\n\n${currentFish.funFact}\n\nTry it: `);
-      window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
-    };
-
-    window.shareFacebook = () => {
-      const url = encodeURIComponent(window.location.href);
-      window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
-    };
-
-    window.copyInfo = () => {
-      if (!currentFish) return;
-      const text = `🐟 AquaScan Fish Identification\n\nSpecies: ${currentFish.name}\nScientific: ${currentFish.scientific}\nFamily: ${currentFish.family}\nHabitat: ${currentFish.habitat}\nSize: ${currentFish.size}\nLifespan: ${currentFish.lifespan}\nConservation: ${currentFish.conservationStatus}\n\n${currentFish.description}\n\n💡 ${currentFish.funFact}`;
-      navigator.clipboard.writeText(text).then(() => showToast('Fish info copied to clipboard!')).catch(() => showToast('Copy failed'));
-    };
-
-    window.downloadCard = () => {
-      if (!currentFish) return;
-      const canvas = document.getElementById('share-canvas');
-      const ctx = canvas.getContext('2d');
-      canvas.width = 800; canvas.height = 450;
-
-      // Background
-      ctx.fillStyle = '#020d18';
-      ctx.fillRect(0, 0, 800, 450);
-
-      // Gradient overlay
-      const grad = ctx.createLinearGradient(0, 0, 800, 450);
-      grad.addColorStop(0, 'rgba(0,100,180,0.2)');
-      grad.addColorStop(1, 'rgba(0,50,120,0.1)');
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, 800, 450);
-
-      // Accent line
-      ctx.fillStyle = '#00f5c4';
-      ctx.fillRect(0, 0, 4, 450);
-
-      // Photo if available
-      if (capturedImageData) {
-        const img = new Image();
-        img.onload = () => {
-          // Draw photo on right side
-          ctx.save();
-          const ph = 300, pw = 300;
-          const px = 470, py = 75;
-          ctx.beginPath();
-          ctx.roundRect(px, py, pw, ph, 12);
-          ctx.clip();
-          // Cover fit
-          const ar = img.width / img.height;
-          let dw = pw, dh = pw / ar;
-          if (dh < ph) { dh = ph; dw = ph * ar; }
-          ctx.drawImage(img, px + (pw - dw) / 2, py + (ph - dh) / 2, dw, dh);
-          ctx.restore();
-          drawCardText(ctx, canvas);
-        };
-        img.src = capturedImageData;
-      } else {
-        drawCardText(ctx, canvas);
-      }
-    };
-
-    function drawCardText(ctx, canvas) {
-      const fish = currentFish;
-
-      // Logo
-      ctx.fillStyle = '#00f5c4';
-      ctx.font = 'bold 14px monospace';
-      ctx.fillText('🐟 AQUASCAN', 40, 45);
-
-      // Fish name
-      ctx.fillStyle = '#e8f4f8';
-      ctx.font = 'bold 36px serif';
-      ctx.fillText(fish.emoji + ' ' + fish.name, 40, 110);
-
-      // Scientific
-      ctx.fillStyle = 'rgba(232,244,248,0.5)';
-      ctx.font = 'italic 16px serif';
-      ctx.fillText(fish.scientific, 40, 138);
-
-      // Info chips
-      ctx.fillStyle = 'rgba(0,245,196,0.15)';
-      const chips = [
-        ['Family', fish.family], ['Habitat', fish.habitat],
-        ['Size', fish.size], ['Origin', fish.origin]
-      ];
-      chips.forEach(([label, val], i) => {
-        const x = 40 + (i % 2) * 200;
-        const y = 165 + Math.floor(i / 2) * 60;
-        ctx.fillStyle = 'rgba(255,255,255,0.05)';
-        ctx.beginPath(); ctx.roundRect(x, y, 185, 45, 6); ctx.fill();
-        ctx.fillStyle = 'rgba(232,244,248,0.4)';
-        ctx.font = '10px monospace';
-        ctx.fillText(label.toUpperCase(), x + 10, y + 16);
-        ctx.fillStyle = '#e8f4f8';
-        ctx.font = '13px monospace';
-        ctx.fillText(val, x + 10, y + 33);
       });
-
-      // Fun fact
-      ctx.fillStyle = 'rgba(0,245,196,0.08)';
-      ctx.beginPath(); ctx.roundRect(40, 300, 400, 80, 8); ctx.fill();
-      ctx.fillStyle = '#00f5c4';
-      ctx.font = '11px monospace';
-      ctx.fillText('💡 FUN FACT', 55, 322);
-      ctx.fillStyle = 'rgba(232,244,248,0.7)';
-      ctx.font = '12px monospace';
-      wrapText(ctx, fish.funFact, 55, 342, 370, 16);
-
-      // Footer
-      ctx.fillStyle = 'rgba(232,244,248,0.3)';
-      ctx.font = '11px monospace';
-      ctx.fillText('aquascan.app  |  AI-Powered Fish Identification', 40, 430);
-
-      // Download
-      const link = document.createElement('a');
-      link.download = `aquascan-${fish.name.replace(/\s+/g, '-').toLowerCase()}.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-      showToast('Fish card downloaded!');
+    } else if (attempts > 60) {
+      clearInterval(interval);
+      statusDot.className = 'status-dot error';
+      statusText.textContent = 'TF.js failed to load';
     }
+  }, 500);
+}
 
-    function wrapText(ctx, text, x, y, maxW, lineH) {
-      const words = text.split(' ');
-      let line = '';
-      for (const word of words) {
-        const test = line + word + ' ';
-        if (ctx.measureText(test).width > maxW && line) {
-          ctx.fillText(line, x, y); y += lineH; line = word + ' ';
-        } else { line = test; }
-      }
-      ctx.fillText(line, x, y);
+// ─── Camera ──────────────────────────────────────────────────────────────────
+btnStart.addEventListener('click', function() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    showToast('Camera not supported in this browser. Please use Chrome or Safari.');
+    return;
+  }
+  navigator.mediaDevices.getUserMedia({
+    video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }
+  }).then(function(stream) {
+    mediaStream = stream;
+    video.srcObject = stream;
+    video.style.display = 'block';
+    camPlaceholder.style.display = 'none';
+    snapCanvas.style.display = 'none';
+    btnStart.style.display = 'none';
+    btnScan.style.display = 'flex';
+    btnStop.style.display = 'flex';
+    capturedDataURL = null;
+  }).catch(function(err) {
+    console.error('Camera error:', err);
+    if (err.name === 'NotAllowedError') {
+      showToast('Camera permission denied. Please allow camera access and try again.');
+    } else if (err.name === 'NotFoundError') {
+      showToast('No camera found. Please use file upload instead.');
+    } else {
+      showToast('Camera error: ' + err.message);
     }
+  });
+});
 
-    // ── Toast ──
-    function showToast(msg) {
-      const t = document.getElementById('toast');
-      t.textContent = msg; t.classList.add('show');
-      setTimeout(() => t.classList.remove('show'), 3000);
-    }
+btnStop.addEventListener('click', function() {
+  stopCamera();
+});
 
-    // ── Init ──
-    loadModel();
-  </script>
+function stopCamera() {
+  if (mediaStream) {
+    mediaStream.getTracks().forEach(function(t) { t.stop(); });
+    mediaStream = null;
+  }
+  video.srcObject = null;
+  video.style.display = 'none';
+  camPlaceholder.style.display = 'flex';
+  btnStart.style.display = 'flex';
+  btnScan.style.display = 'none';
+  btnStop.style.display = 'none';
+}
+
+// ─── Scan from Camera ────────────────────────────────────────────────────────
+btnScan.addEventListener('click', function() {
+  if (!model) { showToast('AI model not ready yet…'); return; }
+  if (!mediaStream) { showToast('Camera is not active.'); return; }
+
+  var w = video.videoWidth || 640;
+  var h = video.videoHeight || 480;
+  snapCanvas.width = w;
+  snapCanvas.height = h;
+  var ctx = snapCanvas.getContext('2d');
+  ctx.drawImage(video, 0, 0, w, h);
+  snapCanvas.style.display = 'block';
+  capturedDataURL = snapCanvas.toDataURL('image/jpeg', 0.9);
+
+  scanLine.classList.add('active');
+  showScanning();
+
+  model.classify(snapCanvas).then(function(preds) {
+    scanLine.classList.remove('active');
+    showResult(matchFish(preds));
+  }).catch(function(err) {
+    console.error('Classification error:', err);
+    scanLine.classList.remove('active');
+    showResult(FISH.unknown);
+  });
+});
+
+// ─── Upload Image ────────────────────────────────────────────────────────────
+fileInput.addEventListener('change', function(e) {
+  var file = e.target.files && e.target.files[0];
+  if (!file) return;
+  if (!model) { showToast('AI model still loading, please wait…'); return; }
+
+  var url = URL.createObjectURL(file);
+  var img = new Image();
+  img.onload = function() {
+    var w = img.naturalWidth || img.width;
+    var h = img.naturalHeight || img.height;
+    snapCanvas.width = w;
+    snapCanvas.height = h;
+    var ctx = snapCanvas.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+    snapCanvas.style.display = 'block';
+    video.style.display = 'none';
+    camPlaceholder.style.display = 'none';
+    capturedDataURL = snapCanvas.toDataURL('image/jpeg', 0.9);
+    URL.revokeObjectURL(url);
+    showScanning();
+
+    model.classify(img).then(function(preds) {
+      showResult(matchFish(preds));
+    }).catch(function(err) {
+      console.error('Classification error:', err);
+      showResult(FISH.unknown);
+    });
+  };
+  img.onerror = function() {
+    showToast('Could not load image. Please try another file.');
+    URL.revokeObjectURL(url);
+  };
+  img.src = url;
+  // Reset input so same file can be re-uploaded
+  fileInput.value = '';
+});
+
+// ─── UI State ────────────────────────────────────────────────────────────────
+function showScanning() {
+  document.getElementById('result-empty').style.display = 'none';
+  document.getElementById('scanning-state').classList.add('show');
+  document.getElementById('result-card').classList.remove('show');
+}
+
+function showResult(fish) {
+  currentFish = fish;
+  document.getElementById('scanning-state').classList.remove('show');
+  document.getElementById('result-card').classList.add('show');
+
+  document.getElementById('r-badge').textContent = fish.emoji;
+  document.getElementById('r-badge').style.background = fish.color + '22';
+  document.getElementById('r-name').textContent = fish.name;
+  document.getElementById('r-sci').textContent = fish.scientific;
+
+  if (fish.confidence != null) {
+    var pct = Math.round(fish.confidence * 100);
+    document.getElementById('r-conf').textContent = '● ' + pct + '% confidence';
+  } else {
+    document.getElementById('r-conf').textContent = '';
+  }
+
+  var csColors = { 'Least Concern':'#52b788','Vulnerable':'#f4a261','Endangered':'#e63946','Unknown':'#888' };
+  var csColor = csColors[fish.status] || '#888';
+  var badge = document.getElementById('r-conservation');
+  badge.textContent = '⬡ ' + fish.status;
+  badge.style.color = csColor;
+  badge.style.borderColor = csColor + '44';
+  badge.style.background = csColor + '18';
+
+  document.getElementById('r-family').textContent  = fish.family;
+  document.getElementById('r-habitat').textContent = fish.habitat;
+  document.getElementById('r-size').textContent    = fish.size;
+  document.getElementById('r-lifespan').textContent = fish.lifespan;
+  document.getElementById('r-origin').textContent  = fish.origin;
+  document.getElementById('r-temp').textContent    = fish.temp;
+  document.getElementById('r-desc').textContent    = fish.desc;
+  document.getElementById('r-fact').textContent    = fish.fact;
+}
+
+// ─── Share ───────────────────────────────────────────────────────────────────
+function shareTwitter() {
+  if (!currentFish) return;
+  var text = '🐟 I just identified a ' + currentFish.name + ' (' + currentFish.scientific + ') using AquaScan!\n\n💡 ' + currentFish.fact + '\n\nTry AquaScan: ' + window.location.href;
+  window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(text), '_blank');
+}
+
+function shareFacebook() {
+  window.open('https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(window.location.href), '_blank');
+}
+
+function copyInfo() {
+  if (!currentFish) return;
+  var text = '🐟 AquaScan Fish Identification\n\nSpecies: ' + currentFish.name + '\nScientific: ' + currentFish.scientific + '\nFamily: ' + currentFish.family + '\nHabitat: ' + currentFish.habitat + '\nSize: ' + currentFish.size + '\nLifespan: ' + currentFish.lifespan + '\nConservation: ' + currentFish.status + '\n\n' + currentFish.desc + '\n\n💡 ' + currentFish.fact;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function() { showToast('Fish info copied!'); }).catch(function() { fallbackCopy(text); });
+  } else {
+    fallbackCopy(text);
+  }
+}
+
+function fallbackCopy(text) {
+  var ta = document.createElement('textarea');
+  ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.focus(); ta.select();
+  try { document.execCommand('copy'); showToast('Fish info copied!'); } catch(e) { showToast('Copy failed'); }
+  document.body.removeChild(ta);
+}
+
+function downloadCard() {
+  if (!currentFish) return;
+  var fish = currentFish;
+  var canvas = document.getElementById('share-canvas');
+  var ctx = canvas.getContext('2d');
+  canvas.width = 800; canvas.height = 460;
+
+  // BG
+  ctx.fillStyle = '#020d18'; ctx.fillRect(0, 0, 800, 460);
+  var g = ctx.createLinearGradient(0, 0, 800, 460);
+  g.addColorStop(0, 'rgba(0,100,180,0.18)'); g.addColorStop(1, 'rgba(0,50,120,0.08)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, 800, 460);
+
+  // Accent
+  ctx.fillStyle = '#00f5c4'; ctx.fillRect(0, 0, 4, 460);
+
+  function drawCard() {
+    // Logo
+    ctx.fillStyle = '#00f5c4'; ctx.font = 'bold 13px monospace';
+    ctx.fillText('🐟 AQUASCAN — AI Fish Identifier', 24, 38);
+
+    // Name
+    ctx.fillStyle = '#e8f4f8'; ctx.font = 'bold 34px Georgia, serif';
+    ctx.fillText(fish.emoji + '  ' + fish.name, 24, 95);
+
+    // Scientific
+    ctx.fillStyle = 'rgba(232,244,248,0.5)'; ctx.font = 'italic 15px Georgia, serif';
+    ctx.fillText(fish.scientific, 24, 122);
+
+    // Chips
+    var chips = [['Family', fish.family], ['Habitat', fish.habitat], ['Size', fish.size], ['Origin', fish.origin]];
+    chips.forEach(function(c, i) {
+      var cx = 24 + (i % 2) * 210, cy = 148 + Math.floor(i / 2) * 58;
+      ctx.fillStyle = 'rgba(255,255,255,0.05)';
+      ctx.beginPath(); ctx.roundRect(cx, cy, 195, 46, 6); ctx.fill();
+      ctx.fillStyle = 'rgba(232,244,248,0.38)'; ctx.font = '9px monospace';
+      ctx.fillText(c[0].toUpperCase(), cx + 10, cy + 15);
+      ctx.fillStyle = '#e8f4f8'; ctx.font = '12px monospace';
+      ctx.fillText(c[1], cx + 10, cy + 33);
+    });
+
+    // Fun fact
+    ctx.fillStyle = 'rgba(0,245,196,0.07)';
+    ctx.beginPath(); ctx.roundRect(24, 285, 440, 105, 8); ctx.fill();
+    ctx.fillStyle = 'rgba(0,245,196,0.7)'; ctx.fillRect(24, 285, 3, 105);
+    ctx.fillStyle = '#00f5c4'; ctx.font = '10px monospace';
+    ctx.fillText('💡  FUN FACT', 36, 305);
+    ctx.fillStyle = 'rgba(232,244,248,0.72)'; ctx.font = '12px monospace';
+    wrapText(ctx, fish.fact, 36, 325, 415, 17);
+
+    // Footer
+    ctx.fillStyle = 'rgba(232,244,248,0.25)'; ctx.font = '10px monospace';
+    ctx.fillText('Generated by AquaScan · AI-powered fish identification · ' + new Date().toLocaleDateString(), 24, 445);
+
+    var link = document.createElement('a');
+    link.download = 'aquascan-' + fish.name.toLowerCase().replace(/\s+/g, '-') + '.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+    showToast('Fish card downloaded!');
+  }
+
+  // Draw captured photo if available
+  if (capturedDataURL) {
+    var img = new Image();
+    img.onload = function() {
+      ctx.save();
+      var px = 490, py = 60, pw = 285, ph = 285;
+      ctx.beginPath(); ctx.roundRect(px, py, pw, ph, 10); ctx.clip();
+      var ar = img.width / img.height;
+      var dw = pw, dh = pw / ar;
+      if (dh < ph) { dh = ph; dw = ph * ar; }
+      ctx.drawImage(img, px + (pw - dw) / 2, py + (ph - dh) / 2, dw, dh);
+      ctx.restore();
+      drawCard();
+    };
+    img.src = capturedDataURL;
+  } else {
+    drawCard();
+  }
+}
+
+function wrapText(ctx, text, x, y, maxW, lineH) {
+  var words = text.split(' '), line = '';
+  for (var n = 0; n < words.length; n++) {
+    var test = line + words[n] + ' ';
+    if (ctx.measureText(test).width > maxW && line !== '') {
+      ctx.fillText(line, x, y); y += lineH; line = words[n] + ' ';
+    } else { line = test; }
+  }
+  ctx.fillText(line, x, y);
+}
+
+// ─── Toast ───────────────────────────────────────────────────────────────────
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 3000);
+}
+
+// ─── Init ────────────────────────────────────────────────────────────────────
+window.addEventListener('load', function() { loadModel(); });
+</script>
 </body>
 </html>
