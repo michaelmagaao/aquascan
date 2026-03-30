@@ -353,7 +353,7 @@
           <span id="status-text">Loading AI model…</span>
         </div>
 
-        <button class="btn btn-primary" id="btn-start" disabled>📷 Start Camera</button>
+        <button class="btn btn-primary" id="btn-start">📷 Start Camera</button>
         <button class="btn btn-primary" id="btn-scan" style="display:none">🔍 Scan Fish</button>
         <button class="btn btn-secondary" id="btn-stop" style="display:none">⏹ Stop Camera</button>
 
@@ -556,6 +556,9 @@ btnStart.addEventListener('click', function() {
   }).then(function(stream) {
     mediaStream = stream;
     video.srcObject = stream;
+    video.onloadedmetadata = function() {
+  video.play();
+};
     video.style.display = 'block';
     camPlaceholder.style.display = 'none';
     snapCanvas.style.display = 'none';
