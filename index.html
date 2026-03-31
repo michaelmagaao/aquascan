@@ -10,8 +10,7 @@
 
   <!-- TensorFlow.js loaded as classic scripts -->
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js"></script>
- <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest"></script>
-
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -438,63 +437,67 @@
 var FISH = {
   tuna: {
     name: "Tuna",
-  scientific: "Thunnus spp.",
-  family: "Scombridae",
-  habitat: "Open ocean",
-  size: "Up to 2.5 m",
-  lifespan: "15–30 years",
-  origin: "Worldwide",
-  temp: "20–30°C",
-  status: "Least Concern",
-  emoji: "🐟",
-  color: "#2a9d8f",
-  desc: "A fast-swimming pelagic fish found in tropical waters.",
-  fact: "Tuna can swim up to 70 km/h."
+    scientific: "Thunnus spp.",
+    family: "Scombridae",
+    habitat: "Open ocean",
+    size: "Up to 2.5 m",
+    lifespan: "15–30 years",
+    origin: "Worldwide",
+    temp: "20–30°C",
+    status: "Least Concern",
+    emoji: "🐟",
+    color: "#2a9d8f",
+    desc: "A fast-swimming pelagic fish found in tropical waters.",
+    fact: "Tuna can swim up to 70 km/h."
   },
-  grouper: {
-    name: "Grouper".
-scientific: "Epinephelinae".
-family: "Serranidae".
-habitat: "Coral reefs and rocky bottoms".
-size: "Up to 2.5 m (Giant Grouper)".
-lifespan: "30–50 years".
-origin: "Tropical and subtropical waters".
-temp: "22–28°C".
-status: "Varies by species (NT/VU)".
-emoji: "🐠".
-color: "#a67c52".
-desc: "A stout-bodied, ambush predator known for its large mouth and heavy scales.".
-fact: "Groupers don't bite their prey; they swallow it whole by creating a powerful suction with their mouths."
-  },
-  seabream: {
-    name: "Seabream",
-scientific: "Sparidae",
-family: "Sparidae",
-habitat: "Coastal waters and estuaries",
-size: "Up to 70 cm",
-lifespan: "10–20 years",
-origin: "Mediterranean Sea and Atlantic Ocean",
-temp: "15–24°C",
-status: "Least Concern",
-emoji: "🐟",
-color: "#d9d9d9",
-desc: "A deep-bodied, silver fish highly prized for its delicate, white meat.",
-fact: "Many seabream species are protandrous hermaphrodites, meaning they are born male and can change into females later in life."
-  },
-  unknown: { ... }
-};
 
-var KEYWORDS = {
-  goldfish:  ["goldfish","gold fish","carassius","koi","carp"],
-  shark:     ["shark","white shark","tiger shark","hammerhead","lemon shark","bull shark"],
-  clownfish: ["clownfish","clown fish","anemone fish","amphiprion"],
-  tuna:      ["tuna","bluefin","yellowfin","skipjack","albacore"],
-  salmon:    ["salmon","salmo","coho","chinook","sockeye"],
-  trout:     ["trout","rainbow","oncorhynchus","brook trout","steelhead"],
-  tilapia:   ["tilapia","oreochromis","cichlid"],
-  carp:      ["carp","cyprinus"],
-  angelfish: ["angelfish","angel fish","pterophyllum"],
-  bass:      ["bass","largemouth","smallmouth","striped bass","sea bass","perch"]
+  grouper: {
+    name: "Grouper",
+    scientific: "Epinephelinae",
+    family: "Serranidae",
+    habitat: "Coral reefs",
+    size: "Up to 1.5 m",
+    lifespan: "10–20 years",
+    origin: "Tropical seas",
+    temp: "22–28°C",
+    status: "Vulnerable",
+    emoji: "🐟",
+    color: "#6a994e",
+    desc: "A reef fish known for ambush hunting and large mouth.",
+    fact: "Groupers can swallow prey whole!"
+  },
+
+  seabream: {
+    name: "Sea Bream",
+    scientific: "Sparidae",
+    family: "Sparidae",
+    habitat: "Coastal waters",
+    size: "Up to 70 cm",
+    lifespan: "5–15 years",
+    origin: "Mediterranean & Indo-Pacific",
+    temp: "18–26°C",
+    status: "Least Concern",
+    emoji: "🐠",
+    color: "#f4a261",
+    desc: "A popular coastal fish widely used in aquaculture.",
+    fact: "Sea bream are commonly farmed for food."
+  },
+
+  unknown: {
+    name: "Unknown Fish",
+    scientific: "N/A",
+    family: "-",
+    habitat: "Unknown",
+    size: "-",
+    lifespan: "-",
+    origin: "-",
+    temp: "-",
+    status: "Unknown",
+    emoji: "🐡",
+    color: "#999",
+    desc: "The fish could not be identified.",
+    fact: "Try a clearer image or better lighting."
+  }
 };
 
 // ─── State ───────────────────────────────────────────────────────────────────
