@@ -648,7 +648,7 @@ fileInput.addEventListener('change', function(e) {
   if (!file) return;
   if (!model) { showToast('AI model still loading, please wait…'); return; }
 
-  var url = URL.createObjectURL(file);
+  var url = window.URL.createObjectURL(file);
   var img = new Image();
   img.onload = function() {
     var w = img.naturalWidth || img.width;
@@ -661,7 +661,7 @@ fileInput.addEventListener('change', function(e) {
     video.style.display = 'none';
     camPlaceholder.style.display = 'none';
     capturedDataURL = snapCanvas.toDataURL('image/jpeg', 0.9);
-    URL.revokeObjectURL(url);
+   window.URL.revokeObjectURL(url);
     showScanning();
 
   model.predict(img).then(function(preds) {
