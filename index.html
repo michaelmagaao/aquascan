@@ -642,6 +642,7 @@ btnScan.addEventListener('click', function() {
 });
 });
 
+  
 // ─── Upload Image ────────────────────────────────────────────────────────────
 fileInput.addEventListener('change', function(e) {
   var file = e.target.files && e.target.files[0];
@@ -725,18 +726,44 @@ function showResult(fish) {
   document.getElementById('r-fact').textContent    = fish.fact;
 }
 
-  function showResultFromTM(prediction) {
+  async function showResultFromTM(prediction) {
 
   const label = prediction.className;
   const confidence = prediction.probability;
 
-let key = label.toLowerCase();
-let fish = FISH[key] || FISH.unknown;
+  let key = label.toLowerCase().replace(/\s+/g, '');
+  let fish = FISH[key] || FISH.unknown;
+
+  // ✅ Fetch real data from GBIF
+  const gbifData = await fetchGBIFData(label);
+
+  if (gbifData && gbifData.usageKey) {
+    fish = Object.assign({}, fish, {
+      scientific: gbifData.scientificName || fish.scientific,
+      family: gbifData.family || fish.family,
+      origin: gbifData.kingdom || fish.origin
+    });
+  }
 
   fish = Object.assign({}, fish, { confidence });
 
   showResult(fish);
 }
+  
+async function fetchGBIFData(fishName) {
+  try {
+    const res = await fetch(`https://api.gbif.org/v1/species/match?name=${encodeURIComponent(fishName)}`);
+    const data = await res.json();
+
+    console.log("GBIF result:", data);
+    return data;
+
+  } catch (err) {
+    console.error("GBIF error:", err);
+    return null;
+  }
+}
+  
 // ─── Share ───────────────────────────────────────────────────────────────────
 function shareTwitter() {
   if (!currentFish) return;
