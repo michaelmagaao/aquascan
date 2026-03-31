@@ -10,7 +10,7 @@
 
   <!-- TensorFlow.js loaded as classic scripts -->
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.1/dist/mobilenet.min.js"></script>
+ <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest"></script>
 
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -436,17 +436,22 @@
 <script>
 // ─── Fish Database ───────────────────────────────────────────────────────────
 var FISH = {
-  goldfish:  { name:"Goldfish", scientific:"Carassius auratus", family:"Cyprinidae", habitat:"Freshwater", origin:"East Asia", size:"20–45 cm", lifespan:"10–15 yrs", diet:"Omnivore", status:"Least Concern", desc:"One of the earliest domesticated fish, goldfish were selectively bred in ancient China over 1,000 years ago. They exhibit a wide variety of colors, fin shapes, and body types.", fact:"Goldfish have a memory span of at least 3 months — the 3-second myth is completely false!", temp:"18–24°C", emoji:"🐠", color:"#f4a261" },
-  shark:     { name:"Great White Shark", scientific:"Carcharodon carcharias", family:"Lamnidae", habitat:"Marine – open ocean", origin:"Worldwide", size:"4–6 m", lifespan:"70+ yrs", diet:"Carnivore", status:"Vulnerable", desc:"The world's largest predatory fish. Despite a fearsome reputation, attacks on humans are rare and often cases of mistaken identity.", fact:"Great whites can detect a single drop of blood in 100 liters of water.", temp:"12–24°C", emoji:"🦈", color:"#457b9d" },
-  clownfish: { name:"Clownfish", scientific:"Amphiprioninae", family:"Pomacentridae", habitat:"Marine – tropical reefs", origin:"Indo-Pacific", size:"7–17 cm", lifespan:"6–10 yrs", diet:"Omnivore", status:"Least Concern", desc:"Famous for their symbiotic relationship with sea anemones. They are immune to the anemone's stinging tentacles and are sequential hermaphrodites — all born male.", fact:"All clownfish are born male. When the dominant female dies, the largest male changes sex.", temp:"24–27°C", emoji:"🐠", color:"#e76f51" },
-  tuna:      { name:"Bluefin Tuna", scientific:"Thunnus thynnus", family:"Scombridae", habitat:"Marine – open ocean", origin:"Atlantic & Mediterranean", size:"2–3 m", lifespan:"35–40 yrs", diet:"Carnivore", status:"Endangered", desc:"One of the fastest fish in the ocean at 70 km/h. They are warm-blooded — a rare fish trait — allowing them to thrive in cold waters.", fact:"A single bluefin tuna can fetch over $1 million at auction in Japan.", temp:"10–30°C", emoji:"🐟", color:"#2a9d8f" },
-  salmon:    { name:"Atlantic Salmon", scientific:"Salmo salar", family:"Salmonidae", habitat:"Freshwater & Marine", origin:"North Atlantic", size:"70–150 cm", lifespan:"3–8 yrs", diet:"Carnivore", status:"Least Concern", desc:"Anadromous fish that migrate from the ocean back to freshwater birthstreams to spawn. They navigate using Earth's magnetic field and scent memory.", fact:"Salmon stop eating entirely once they enter freshwater for spawning, surviving on stored body fat.", temp:"6–20°C", emoji:"🐟", color:"#e9c46a" },
-  trout:     { name:"Rainbow Trout", scientific:"Oncorhynchus mykiss", family:"Salmonidae", habitat:"Freshwater", origin:"Pacific coast, North America", size:"30–76 cm", lifespan:"4–6 yrs", diet:"Carnivore", status:"Least Concern", desc:"Named for the distinctive pink stripe along their lateral line. They require cold, well-oxygenated water and are one of the most popular sport fish in the world.", fact:"Rainbow trout can change coloration based on habitat, diet, and breeding — no two fish look identical.", temp:"10–18°C", emoji:"🎣", color:"#48cae4" },
-  tilapia:   { name:"Nile Tilapia", scientific:"Oreochromis niloticus", family:"Cichlidae", habitat:"Freshwater", origin:"Africa & Middle East", size:"30–60 cm", lifespan:"9–11 yrs", diet:"Omnivore", status:"Least Concern", desc:"One of the most farmed fish globally. Hardy and adaptable, capable of surviving in low-oxygen environments and a cornerstone of sustainable aquaculture.", fact:"Some tilapia are mouthbrooders — the mother incubates and protects fry inside her mouth after hatching.", temp:"20–30°C", emoji:"🐠", color:"#52b788" },
-  carp:      { name:"Common Carp", scientific:"Cyprinus carpio", family:"Cyprinidae", habitat:"Freshwater", origin:"Asia & Europe", size:"40–80 cm", lifespan:"20–47 yrs", diet:"Omnivore", status:"Vulnerable", desc:"One of the most widely distributed freshwater fish. Introduced to every continent except Antarctica and considered invasive in many regions.", fact:"The oldest recorded carp 'Hanako' lived in Japan for an estimated 226 years.", temp:"10–25°C", emoji:"🐟", color:"#b5838d" },
-  angelfish: { name:"Freshwater Angelfish", scientific:"Pterophyllum scalare", family:"Cichlidae", habitat:"Freshwater – Amazon", origin:"South America", size:"15–20 cm", lifespan:"10–12 yrs", diet:"Omnivore", status:"Least Concern", desc:"Prized aquarium fish with a distinctive triangular body and flowing fins. They navigate the Amazon using their flattened bodies to move through dense plant stems.", fact:"Angelfish are devoted parents — mated pairs guard and fan their eggs to maintain oxygen flow.", temp:"24–30°C", emoji:"🐠", color:"#c77dff" },
-  bass:      { name:"Largemouth Bass", scientific:"Micropterus salmoides", family:"Centrarchidae", habitat:"Freshwater", origin:"Eastern North America", size:"30–60 cm", lifespan:"10–16 yrs", diet:"Carnivore", status:"Least Concern", desc:"America's most popular game fish and an aggressive apex predator. It ambushes prey from vegetated cover with explosive strikes.", fact:"Largemouth bass can sense prey through pressure changes in the water using their lateral line.", temp:"18–27°C", emoji:"🎣", color:"#588157" },
-  unknown:   { name:"Unidentified Species", scientific:"Species unidentified", family:"Unknown", habitat:"Aquatic", origin:"Unknown", size:"Varies", lifespan:"Varies", diet:"Varies", status:"Unknown", desc:"Our AI could not precisely identify this fish. Try again with a clearer, well-lit photo showing the full body of the fish against a contrasting background.", fact:"There are over 34,000 known fish species — more than all other vertebrate species combined!", temp:"Varies", emoji:"🐡", color:"#90e0ef" }
+  tuna: {
+    name: "Tuna",
+    scientific: "Thunnus spp.",
+    ...
+  },
+  grouper: {
+    name: "Grouper",
+    scientific: "Epinephelinae",
+    ...
+  },
+  seabream: {
+    name: "Sea Bream",
+    scientific: "Sparidae",
+    ...
+  },
+  unknown: { ... }
 };
 
 var KEYWORDS = {
@@ -517,32 +522,26 @@ for (var p = 0; p < 28; p++) {
 }
 
 // ─── Load TF Model ───────────────────────────────────────────────────────────
-function loadModel() {
+const URL = "/model/";
+
+async function loadModel() {
   statusDot.className = 'status-dot loading';
   statusText.textContent = 'Loading AI model…';
 
-  // Wait for mobilenet global to be available
-  var attempts = 0;
-  var interval = setInterval(function() {
-    attempts++;
-    if (typeof mobilenet !== 'undefined' && typeof tf !== 'undefined') {
-      clearInterval(interval);
-      mobilenet.load({ version: 2, alpha: 1.0 }).then(function(m) {
-        model = m;
-        statusDot.className = 'status-dot ready';
-        statusText.textContent = 'AI model ready ✓';
-        btnStart.disabled = false;
-      }).catch(function(err) {
-        console.error('Model load error:', err);
-        statusDot.className = 'status-dot error';
-        statusText.textContent = 'Model failed – check connection';
-      });
-    } else if (attempts > 60) {
-      clearInterval(interval);
-      statusDot.className = 'status-dot error';
-      statusText.textContent = 'TF.js failed to load';
-    }
-  }, 500);
+  try {
+    const modelURL = URL + "model.json";
+    const metadataURL = URL + "metadata.json";
+
+    model = await tmImage.load(modelURL, metadataURL);
+
+    statusDot.className = 'status-dot ready';
+    statusText.textContent = 'AI model ready ✓';
+
+  } catch (err) {
+    console.error("Model load error:", err);
+    statusDot.className = 'status-dot error';
+    statusText.textContent = 'Model failed to load';
+  }
 }
 
 // ─── Camera ──────────────────────────────────────────────────────────────────
@@ -609,14 +608,15 @@ btnScan.addEventListener('click', function() {
   scanLine.classList.add('active');
   showScanning();
 
-  model.classify(snapCanvas).then(function(preds) {
-    scanLine.classList.remove('active');
-    showResult(matchFish(preds));
-  }).catch(function(err) {
-    console.error('Classification error:', err);
-    scanLine.classList.remove('active');
-    showResult(FISH.unknown);
-  });
+  model.predict(snapCanvas).then(function(preds) {
+
+  let highest = preds.reduce((prev, current) =>
+    (prev.probability > current.probability) ? prev : current
+  );
+
+  showResultFromTM(highest);
+
+});
 });
 
 // ─── Upload Image ────────────────────────────────────────────────────────────
@@ -641,12 +641,15 @@ fileInput.addEventListener('change', function(e) {
     URL.revokeObjectURL(url);
     showScanning();
 
-    model.classify(img).then(function(preds) {
-      showResult(matchFish(preds));
-    }).catch(function(err) {
-      console.error('Classification error:', err);
-      showResult(FISH.unknown);
-    });
+  model.predict(img).then(function(preds) {
+
+  let highest = preds.reduce((prev, current) =>
+    (prev.probability > current.probability) ? prev : current
+  );
+
+  showResultFromTM(highest);
+
+});
   };
   img.onerror = function() {
     showToast('Could not load image. Please try another file.');
@@ -699,6 +702,18 @@ function showResult(fish) {
   document.getElementById('r-fact').textContent    = fish.fact;
 }
 
+  function showResultFromTM(prediction) {
+
+  const label = prediction.className;
+  const confidence = prediction.probability;
+
+ let key = label.toLowerCase();
+let fish = FISH[key] || FISH.unknown;
+
+  fish = Object.assign({}, fish, { confidence });
+
+  showResult(fish);
+}
 // ─── Share ───────────────────────────────────────────────────────────────────
 function shareTwitter() {
   if (!currentFish) return;
