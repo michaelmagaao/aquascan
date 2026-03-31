@@ -502,7 +502,7 @@ for (var p = 0; p < 28; p++) {
 }
 
 // ─── Load TF Model ───────────────────────────────────────────────────────────
-const URL = "/model/";
+const URL = process.env.PUBLIC_URL + "/model/";
 
 async function loadModel() {
   statusDot.className = 'status-dot loading';
