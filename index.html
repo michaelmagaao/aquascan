@@ -538,16 +538,26 @@ async function loadModel() {
   statusText.textContent = 'Loading AI model…';
 
   try {
-    const modelURL = URL + "model.json";
-    const metadataURL = URL + "metadata.json";
+    // ✅ Initialize TensorFlow properly
+    await tf.setBackend('webgl');
+    await tf.ready();
+
+    console.log("TF backend:", tf.getBackend());
+
+    const modelURL = "/model/model.json";
+    const metadataURL = "/model/metadata.json";
+
+    console.log("Loading model from:", modelURL);
 
     model = await tmImage.load(modelURL, metadataURL);
+
+    console.log("Model loaded successfully");
 
     statusDot.className = 'status-dot ready';
     statusText.textContent = 'AI model ready ✓';
 
   } catch (err) {
-    console.error("Model load error:", err);
+    console.error("MODEL LOAD ERROR:", err);
     statusDot.className = 'status-dot error';
     statusText.textContent = 'Model failed to load';
   }
