@@ -353,7 +353,7 @@
           <span id="status-text">Loading AI model…</span>
         </div>
 
-        <button class="btn btn-primary" id="btn-start" disabled>📷 Start Camera</button>
+        <button class="btn btn-primary" id="btn-start">📷 Start Camera</button>
         <button class="btn btn-primary" id="btn-scan" style="display:none">🔍 Scan Fish</button>
         <button class="btn btn-secondary" id="btn-stop" style="display:none">⏹ Stop Camera</button>
 
@@ -438,18 +438,48 @@
 var FISH = {
   tuna: {
     name: "Tuna",
-    scientific: "Thunnus spp.",
-    ...
+  scientific: "Thunnus spp.",
+  family: "Scombridae",
+  habitat: "Open ocean",
+  size: "Up to 2.5 m",
+  lifespan: "15–30 years",
+  origin: "Worldwide",
+  temp: "20–30°C",
+  status: "Least Concern",
+  emoji: "🐟",
+  color: "#2a9d8f",
+  desc: "A fast-swimming pelagic fish found in tropical waters.",
+  fact: "Tuna can swim up to 70 km/h."
   },
   grouper: {
-    name: "Grouper",
-    scientific: "Epinephelinae",
-    ...
+    name: "Grouper".
+scientific: "Epinephelinae".
+family: "Serranidae".
+habitat: "Coral reefs and rocky bottoms".
+size: "Up to 2.5 m (Giant Grouper)".
+lifespan: "30–50 years".
+origin: "Tropical and subtropical waters".
+temp: "22–28°C".
+status: "Varies by species (NT/VU)".
+emoji: "🐠".
+color: "#a67c52".
+desc: "A stout-bodied, ambush predator known for its large mouth and heavy scales.".
+fact: "Groupers don't bite their prey; they swallow it whole by creating a powerful suction with their mouths."
   },
   seabream: {
-    name: "Sea Bream",
-    scientific: "Sparidae",
-    ...
+    name: "Seabream",
+scientific: "Sparidae",
+family: "Sparidae",
+habitat: "Coastal waters and estuaries",
+size: "Up to 70 cm",
+lifespan: "10–20 years",
+origin: "Mediterranean Sea and Atlantic Ocean",
+temp: "15–24°C",
+status: "Least Concern",
+emoji: "🐟",
+color: "#d9d9d9",
+desc: "A deep-bodied, silver fish highly prized for its delicate, white meat.",
+fact: "Many seabream species are protandrous hermaphrodites, meaning they are born male and can change into females later in life."
   },
   unknown: { ... }
 };
@@ -467,10 +497,6 @@ var KEYWORDS = {
   bass:      ["bass","largemouth","smallmouth","striped bass","sea bass","perch"]
 };
 
-if (confidence < 0.7) {
-  showResult(FISH.unknown);
-  return;
-}
 // ─── State ───────────────────────────────────────────────────────────────────
 var model = null;
 var mediaStream = null;
@@ -502,7 +528,7 @@ for (var p = 0; p < 28; p++) {
 }
 
 // ─── Load TF Model ───────────────────────────────────────────────────────────
-const URL = process.env.PUBLIC_URL + "/model/";
+const URL = "/model/";
 
 async function loadModel() {
   statusDot.className = 'status-dot loading';
@@ -535,6 +561,9 @@ btnStart.addEventListener('click', function() {
   }).then(function(stream) {
     mediaStream = stream;
     video.srcObject = stream;
+    video.onloadedmetadata = function() {
+  video.play();
+};
     video.style.display = 'block';
     camPlaceholder.style.display = 'none';
     snapCanvas.style.display = 'none';
@@ -687,7 +716,7 @@ function showResult(fish) {
   const label = prediction.className;
   const confidence = prediction.probability;
 
- let key = label.toLowerCase();
+let key = label.toLowerCase();
 let fish = FISH[key] || FISH.unknown;
 
   fish = Object.assign({}, fish, { confidence });
