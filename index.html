@@ -467,30 +467,10 @@ var KEYWORDS = {
   bass:      ["bass","largemouth","smallmouth","striped bass","sea bass","perch"]
 };
 
-function matchFish(predictions) {
-  if (!predictions || !predictions.length) return FISH.unknown;
-  for (var i = 0; i < predictions.length; i++) {
-    var label = predictions[i].className.toLowerCase();
-    for (var key in KEYWORDS) {
-      var kws = KEYWORDS[key];
-      for (var j = 0; j < kws.length; j++) {
-        if (label.indexOf(kws[j]) !== -1) {
-          return Object.assign({}, FISH[key], { confidence: predictions[i].probability });
-        }
-      }
-    }
-  }
-  var top = predictions[0];
-  var tl = top.className.toLowerCase();
-  var aquaWords = ["fish","aquatic","marine","sea","ocean","pond","river","coral","reef","fin","gill","scale","swim","water","eel","ray","pike","cod","herring","mackerel","sardine","anchovy"];
-  for (var w = 0; w < aquaWords.length; w++) {
-    if (tl.indexOf(aquaWords[w]) !== -1) {
-      return Object.assign({}, FISH.unknown, { detectedAs: top.className, confidence: top.probability });
-    }
-  }
-  return Object.assign({}, FISH.unknown, { detectedAs: top.className, confidence: top.probability });
+if (confidence < 0.7) {
+  showResult(FISH.unknown);
+  return;
 }
-
 // ─── State ───────────────────────────────────────────────────────────────────
 var model = null;
 var mediaStream = null;
